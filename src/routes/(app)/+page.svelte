@@ -6,7 +6,7 @@
     import Pane from "$lib/Pane.svelte";
     import { overflowing } from "$lib/overflowing";
     import type { Repo } from "$lib/types";
-    import { getRepos } from "./data.remote";
+    import { getRepos, getAttentionCards } from "./data.remote";
 
     type Selection =
         | { kind: "agent"; id: string }
@@ -14,6 +14,9 @@
 
     const reposQuery = getRepos();
     const repos = $derived(reposQuery.current ?? []);
+
+    const cardsQuery = getAttentionCards();
+    const cards = $derived(cardsQuery.current ?? []);
 
     let selection: Selection = $state({ kind: "agent", id: "a1" });
 
@@ -49,66 +52,73 @@
 
 <div class="layout">
     <AttentionBar>
-        <AttentionCard
-            kind="Permission"
-            title="opencode-3 wants to run a command"
-            description="~/projects/api-server">
-            <pre class="mock-command">npm test</pre>
-            <div class="mock-actions">
-                <button class="mock-btn mock-btn-approve">Approve</button>
-                <button class="mock-btn mock-btn-deny">Deny</button>
-            </div>
-        </AttentionCard>
-        <AttentionCard
-            kind="Permission"
-            title="opencode-1 wants to edit a file"
-            description="~/projects/webapp">
-            <pre class="mock-diff"><span class="mock-diff-file"
-                    >src/lib/api.ts</span>
+        {#each cards as card (card.type)}
+            {#if card.type === "permission-command"}
+                <AttentionCard
+                    kind="Permission"
+                    title="opencode-3 wants to run a command"
+                    description="~/projects/api-server">
+                    <pre class="mock-command">npm test</pre>
+                    <div class="mock-actions">
+                        <button class="mock-btn mock-btn-approve">Approve</button>
+                        <button class="mock-btn mock-btn-deny">Deny</button>
+                    </div>
+                </AttentionCard>
+            {:else if card.type === "permission-edit"}
+                <AttentionCard
+                    kind="Permission"
+                    title="opencode-1 wants to edit a file"
+                    description="~/projects/webapp">
+                    <pre class="mock-diff"><span class="mock-diff-file"
+                            >src/lib/api.ts</span>
 <span class="mock-diff-del">- const timeout = 5000;</span>
 <span class="mock-diff-add">+ const timeout = 30000;</span></pre>
-            <div class="mock-actions">
-                <button class="mock-btn mock-btn-approve">Approve</button>
-                <button class="mock-btn mock-btn-deny">Deny</button>
-            </div>
-        </AttentionCard>
-        <AttentionCard
-            kind="Prompt"
-            title="New task for api-server"
-            description="claude-12 · ~/projects/api-server">
-            <textarea
-                class="mock-input"
-                placeholder="Enter a prompt for the agent..."
-                >Add rate limiting to public endpoints</textarea>
-            <div class="mock-actions">
-                <button class="mock-btn mock-btn-approve">Launch</button>
-            </div>
-        </AttentionCard>
-        <AttentionCard
-            kind="Review"
-            title="claude-7 finished a task"
-            description="~/projects/api-server · 3 files changed">
-            <div class="mock-review">
-                <div class="mock-review-file">
-                    <span class="mock-review-name"
-                        >src/middleware/rateLimit.ts</span>
-                    <span class="mock-review-stat mock-diff-add">+48</span>
-                </div>
-                <div class="mock-review-file">
-                    <span class="mock-review-name">src/routes/index.ts</span>
-                    <span class="mock-review-stat mock-diff-add">+4</span>
-                    <span class="mock-review-stat mock-diff-del">−2</span>
-                </div>
-                <div class="mock-review-file">
-                    <span class="mock-review-name">src/config.ts</span>
-                    <span class="mock-review-stat mock-diff-add">+1</span>
-                </div>
-            </div>
-            <div class="mock-actions">
-                <button class="mock-btn mock-btn-approve">Accept</button>
-                <button class="mock-btn mock-btn-deny">Reject</button>
-            </div>
-        </AttentionCard>
+                    <div class="mock-actions">
+                        <button class="mock-btn mock-btn-approve">Approve</button>
+                        <button class="mock-btn mock-btn-deny">Deny</button>
+                    </div>
+                </AttentionCard>
+            {:else if card.type === "prompt"}
+                <AttentionCard
+                    kind="Prompt"
+                    title="New task for api-server"
+                    description="claude-12 · ~/projects/api-server">
+                    <textarea
+                        class="mock-input"
+                        placeholder="Enter a prompt for the agent..."
+                        >Add rate limiting to public endpoints</textarea>
+                    <div class="mock-actions">
+                        <button class="mock-btn mock-btn-approve">Launch</button>
+                    </div>
+                </AttentionCard>
+            {:else if card.type === "review"}
+                <AttentionCard
+                    kind="Review"
+                    title="claude-7 finished a task"
+                    description="~/projects/api-server · 3 files changed">
+                    <div class="mock-review">
+                        <div class="mock-review-file">
+                            <span class="mock-review-name"
+                                >src/middleware/rateLimit.ts</span>
+                            <span class="mock-review-stat mock-diff-add">+48</span>
+                        </div>
+                        <div class="mock-review-file">
+                            <span class="mock-review-name">src/routes/index.ts</span>
+                            <span class="mock-review-stat mock-diff-add">+4</span>
+                            <span class="mock-review-stat mock-diff-del">−2</span>
+                        </div>
+                        <div class="mock-review-file">
+                            <span class="mock-review-name">src/config.ts</span>
+                            <span class="mock-review-stat mock-diff-add">+1</span>
+                        </div>
+                    </div>
+                    <div class="mock-actions">
+                        <button class="mock-btn mock-btn-approve">Accept</button>
+                        <button class="mock-btn mock-btn-deny">Reject</button>
+                    </div>
+                </AttentionCard>
+            {/if}
+        {/each}
     </AttentionBar>
 
     <div class="bottom">

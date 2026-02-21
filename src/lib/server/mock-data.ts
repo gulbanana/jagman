@@ -1,4 +1,4 @@
-import type { Repo, Commit } from '$lib/types';
+import type { Repo, Commit, AttentionCardData } from '$lib/types';
 
 export const mockRepos: Repo[] = [
 	{
@@ -154,6 +154,13 @@ export const mockRepos: Repo[] = [
 			},
 		],
 	},
+];
+
+export const mockAttentionCards: AttentionCardData[] = [
+	{ type: "permission-command" },
+	{ type: "permission-edit" },
+	{ type: "prompt" },
+	{ type: "review" },
 ];
 
 export const mockCommits: Commit[] = [

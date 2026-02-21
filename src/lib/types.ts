@@ -22,3 +22,9 @@ export type Commit = {
 	message: string;
 	age: string;
 };
+
+export type AttentionCardType = "permission-command" | "permission-edit" | "prompt" | "review";
+
+export type AttentionCardData = {
+	type: AttentionCardType;
+};
