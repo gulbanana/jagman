@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from "svelte";
-	import { overflowing } from "./overflowing";
+	import { overflowing } from "$lib/overflowing";
 
 	let { children }: { children: Snippet } = $props();
 </script>

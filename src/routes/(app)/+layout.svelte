@@ -1,6 +1,6 @@
 <script lang="ts">
-	import RightSidebar from "$lib/RightSidebar.svelte";
-	import LeftSidebar from "$lib/LeftSidebar.svelte";
+	import RightSidebar from "./RightSidebar.svelte";
+	import LeftSidebar from "./LeftSidebar.svelte";
 
 	let { children } = $props();
 </script>

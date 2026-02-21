@@ -1,11 +1,11 @@
 <script lang="ts">
-    import AttentionBar from "$lib/AttentionBar.svelte";
-    import AttentionCard from "$lib/AttentionCard.svelte";
-    import RepoColumn from "$lib/RepoColumn.svelte";
-    import AgentCard from "$lib/AgentCard.svelte";
+    import AttentionBar from "./AttentionBar.svelte";
+    import AttentionCard from "./AttentionCard.svelte";
+    import RepoColumn from "./RepoColumn.svelte";
+    import AgentCard from "./AgentCard.svelte";
     import Pane from "$lib/Pane.svelte";
     import { overflowing } from "$lib/overflowing";
-    import type { Repo } from "$lib/types";
+    import type { Repo } from "$lib/messages";
     import { getRepos, getAttentionCards } from "./data.remote";
 
     type Selection =
@@ -60,7 +60,8 @@
                     description="~/projects/api-server">
                     <pre class="mock-command">npm test</pre>
                     <div class="mock-actions">
-                        <button class="mock-btn mock-btn-approve">Approve</button>
+                        <button class="mock-btn mock-btn-approve"
+                            >Approve</button>
                         <button class="mock-btn mock-btn-deny">Deny</button>
                     </div>
                 </AttentionCard>
@@ -74,7 +75,8 @@
 <span class="mock-diff-del">- const timeout = 5000;</span>
 <span class="mock-diff-add">+ const timeout = 30000;</span></pre>
                     <div class="mock-actions">
-                        <button class="mock-btn mock-btn-approve">Approve</button>
+                        <button class="mock-btn mock-btn-approve"
+                            >Approve</button>
                         <button class="mock-btn mock-btn-deny">Deny</button>
                     </div>
                 </AttentionCard>
@@ -88,7 +90,8 @@
                         placeholder="Enter a prompt for the agent..."
                         >Add rate limiting to public endpoints</textarea>
                     <div class="mock-actions">
-                        <button class="mock-btn mock-btn-approve">Launch</button>
+                        <button class="mock-btn mock-btn-approve"
+                            >Launch</button>
                     </div>
                 </AttentionCard>
             {:else if card.type === "review"}
@@ -100,20 +103,26 @@
                         <div class="mock-review-file">
                             <span class="mock-review-name"
                                 >src/middleware/rateLimit.ts</span>
-                            <span class="mock-review-stat mock-diff-add">+48</span>
+                            <span class="mock-review-stat mock-diff-add"
+                                >+48</span>
                         </div>
                         <div class="mock-review-file">
-                            <span class="mock-review-name">src/routes/index.ts</span>
-                            <span class="mock-review-stat mock-diff-add">+4</span>
-                            <span class="mock-review-stat mock-diff-del">−2</span>
+                            <span class="mock-review-name"
+                                >src/routes/index.ts</span>
+                            <span class="mock-review-stat mock-diff-add"
+                                >+4</span>
+                            <span class="mock-review-stat mock-diff-del"
+                                >−2</span>
                         </div>
                         <div class="mock-review-file">
                             <span class="mock-review-name">src/config.ts</span>
-                            <span class="mock-review-stat mock-diff-add">+1</span>
+                            <span class="mock-review-stat mock-diff-add"
+                                >+1</span>
                         </div>
                     </div>
                     <div class="mock-actions">
-                        <button class="mock-btn mock-btn-approve">Accept</button>
+                        <button class="mock-btn mock-btn-approve"
+                            >Accept</button>
                         <button class="mock-btn mock-btn-deny">Reject</button>
                     </div>
                 </AttentionCard>

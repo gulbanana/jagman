@@ -38,7 +38,7 @@ Use SvelteKit remote functions as the primary data flow mechanism.
 - **Reads** use `query()` — returns a reactive object with `.current`, `.loading`, `.error`, and `.refresh()`. SSR'd on first render, re-fetchable on demand.
 - **Form-based mutations** use `form()` — spreads onto a `<form>` element, automatically refreshes all active queries on success.
 - **Imperative mutations** use `command()` — for actions triggered outside a form context, with explicit `.updates()` to refresh specific queries.
-- **Shared types** live in `src/lib/types.ts` and are imported by both remote modules and components.
+- **Shared types** live in `src/lib/messages.ts` and are imported by both remote modules and components.
 
 Remote function files are colocated with the routes that use them (e.g. `src/routes/data.remote.ts` alongside `src/routes/+page.svelte`).
 

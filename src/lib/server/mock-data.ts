@@ -1,4 +1,4 @@
-import type { Repo, Commit, AttentionCardData } from '$lib/types';
+import type { Repo, Commit, AttentionCardData } from '$lib/messages';
 
 export const mockRepos: Repo[] = [
 	{

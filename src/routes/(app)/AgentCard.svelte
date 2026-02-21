@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Pane from "./Pane.svelte";
+	import Pane from "$lib/Pane.svelte";
 
 	let {
 		name,

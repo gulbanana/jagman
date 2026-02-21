@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from "svelte";
-	import { overflowing } from "./overflowing";
-	import Pane from "./Pane.svelte";
+	import { overflowing } from "$lib/overflowing";
+	import Pane from "$lib/Pane.svelte";
 
 	let { children }: { children: Snippet } = $props();
 </script>
