@@ -24,3 +24,7 @@ vite.config.ts.timestamp-*
 
 # Agents
 .claude/
+
+# Playwright
+.playwright-mcp/
+test-results/

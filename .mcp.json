@@ -1,5 +1,15 @@
 {
     "mcpServers": {
+        "playwright": {
+            "type": "stdio",
+            "env": {},
+            "command": "env",
+            "args": [
+                "npx",
+                "-y",
+                "@playwright/mcp@latest"
+            ]
+        },
         "svelte": {
             "type": "stdio",
             "env": {},
