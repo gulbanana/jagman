@@ -108,3 +108,13 @@ body {
 
     user-select: none;
 }
+
+a {
+    color: var(--ctp-blue);
+    text-decoration: none;
+
+    &:hover,
+    &:active {
+        text-decoration: underline;
+    }
+}

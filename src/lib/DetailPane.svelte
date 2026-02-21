@@ -15,11 +15,6 @@
 		agents: { id: string; name: string; status: string }[];
 	};
 
-	type Event = {
-		time: string;
-		text: string;
-	};
-
 	type Commit = {
 		hash: string;
 		author: string;
@@ -30,13 +25,9 @@
 	let {
 		agent = null,
 		repo = null,
-		events,
-		onclose
 	}: {
 		agent?: Agent | null;
 		repo?: Repo | null;
-		events: Event[];
-		onclose: () => void;
 	} = $props();
 
 	const repoCommits: Commit[] = [
@@ -50,20 +41,13 @@
 	];
 
 	const label = $derived(
-		agent ? agent.name : repo ? repo.path : "Activity"
+		agent ? agent.name : repo ? repo.path : ""
 	);
-
-	const showClose = $derived(agent !== null || repo !== null);
 </script>
 
 <Pane>
 	{#snippet header()}
-		<span class="header-row">
-			<span class="label">{label}</span>
-			{#if showClose}
-				<button class="close" onclick={onclose}>&times;</button>
-			{/if}
-		</span>
+		<span class="label">{label}</span>
 	{/snippet}
 
 	{#if agent}
@@ -90,43 +74,13 @@
 				{/each}
 			</div>
 		</div>
-	{:else}
-		<div class="events">
-			{#each events as event, i (i)}
-				<div class="event">
-					<span class="time">{event.time}</span>
-					<span class="text">{event.text}</span>
-				</div>
-			{/each}
-		</div>
 	{/if}
 </Pane>
 
 <style>
-	.header-row {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		width: 100%;
-	}
-
 	.label {
 		font-family: var(--stack-code);
 		font-weight: 600;
-	}
-
-	.close {
-		background: none;
-		border: none;
-		font-size: 16px;
-		line-height: 1;
-		cursor: pointer;
-		color: var(--ctp-subtext0);
-		padding: 0 4px;
-	}
-
-	.close:hover {
-		color: var(--ctp-text);
 	}
 
 	.log {
@@ -200,26 +154,4 @@
 		white-space: nowrap;
 	}
 
-	.events {
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
-	}
-
-	.event {
-		display: flex;
-		gap: 16px;
-		font-size: 13px;
-	}
-
-	.time {
-		font-family: var(--stack-code);
-		font-size: 12px;
-		color: var(--ctp-overlay2);
-		white-space: nowrap;
-	}
-
-	.text {
-		color: var(--ctp-subtext1);
-	}
 </style>

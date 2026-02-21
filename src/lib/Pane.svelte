@@ -37,6 +37,9 @@
 		border-radius: 8px;
 		background-color: var(--ctp-crust);
 		overflow: hidden;
+		display: grid;
+		grid-template-rows: auto 1fr;
+		grid-template-columns: minmax(0, auto);
 	}
 
 	.pane.stacked-above {
@@ -60,6 +63,7 @@
 	}
 
 	.content {
+		grid-row: 2;
 		padding: 8px;
 	}
 </style>

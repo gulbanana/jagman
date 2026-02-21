@@ -5,6 +5,7 @@
     import AgentCard from "$lib/AgentCard.svelte";
     import DetailPane from "$lib/DetailPane.svelte";
     import Pane from "$lib/Pane.svelte";
+    import { overflowing } from "$lib/overflowing";
 
     type Agent = {
         id: string;
@@ -183,47 +184,26 @@
 
     const allAgents = repos.flatMap((r) => r.agents);
 
-    const events = [
-        { time: "14:32:16", text: "claude-1 is editing src/auth/login.ts" },
-        { time: "14:30:08", text: "opencode-3 is waiting for permission" },
-        {
-            time: "14:28:12",
-            text: "claude-2 is editing src/routes/+page.svelte",
-        },
-        { time: "14:25:08", text: "opencode-1 is waiting for permission" },
-        { time: "13:45:00", text: "claude-3 completed dark mode task" },
-        { time: "13:40:12", text: "claude-7 completed rate limiting" },
-        { time: "13:32:00", text: "claude-1 started on webapp" },
-    ];
-
-    let selection: Selection | null = $state(null);
+    let selection: Selection = $state({ kind: "agent", id: "a1" });
 
     const selectedAgent = $derived.by(() => {
-        const sel = selection;
-        return sel?.kind === "agent"
-            ? (allAgents.find((a) => a.id === sel.id) ?? null)
+        return selection.kind === "agent"
+            ? (allAgents.find((a) => a.id === selection.id) ?? null)
             : null;
     });
 
     const selectedRepo = $derived.by(() => {
-        const sel = selection;
-        return sel?.kind === "repo"
-            ? (repos.find((r) => r.path === sel.path) ?? null)
+        return selection.kind === "repo"
+            ? (repos.find((r) => r.path === selection.path) ?? null)
             : null;
     });
 
     function selectAgent(id: string) {
-        selection =
-            selection?.kind === "agent" && selection.id === id
-                ? null
-                : { kind: "agent", id };
+        selection = { kind: "agent", id };
     }
 
     function selectRepo(path: string) {
-        selection =
-            selection?.kind === "repo" && selection.path === path
-                ? null
-                : { kind: "repo", path };
+        selection = { kind: "repo", path };
     }
 
     function hasActiveAgents(repo: Repo): boolean {
@@ -236,19 +216,67 @@
         <AttentionCard
             kind="Permission"
             title="opencode-3 wants to run a command"
-            description="npm test" />
+            description="~/projects/api-server">
+            <pre class="mock-command">npm test</pre>
+            <div class="mock-actions">
+                <button class="mock-btn mock-btn-approve">Approve</button>
+                <button class="mock-btn mock-btn-deny">Deny</button>
+            </div>
+        </AttentionCard>
         <AttentionCard
             kind="Permission"
-            title="opencode-1 wants to run a command"
-            description="npm test" />
+            title="opencode-1 wants to edit a file"
+            description="~/projects/webapp">
+            <pre class="mock-diff"><span class="mock-diff-file"
+                    >src/lib/api.ts</span>
+<span class="mock-diff-del">- const timeout = 5000;</span>
+<span class="mock-diff-add">+ const timeout = 30000;</span></pre>
+            <div class="mock-actions">
+                <button class="mock-btn mock-btn-approve">Approve</button>
+                <button class="mock-btn mock-btn-deny">Deny</button>
+            </div>
+        </AttentionCard>
         <AttentionCard
             kind="Prompt"
             title="New task for api-server"
-            description="Add rate limiting to public endpoints" />
+            description="claude-12 · ~/projects/api-server">
+            <textarea
+                class="mock-input"
+                placeholder="Enter a prompt for the agent..."
+                >Add rate limiting to public endpoints</textarea>
+            <div class="mock-actions">
+                <button class="mock-btn mock-btn-approve">Launch</button>
+            </div>
+        </AttentionCard>
+        <AttentionCard
+            kind="Review"
+            title="claude-7 finished a task"
+            description="~/projects/api-server · 3 files changed">
+            <div class="mock-review">
+                <div class="mock-review-file">
+                    <span class="mock-review-name"
+                        >src/middleware/rateLimit.ts</span>
+                    <span class="mock-review-stat mock-diff-add">+48</span>
+                </div>
+                <div class="mock-review-file">
+                    <span class="mock-review-name">src/routes/index.ts</span>
+                    <span class="mock-review-stat mock-diff-add">+4</span>
+                    <span class="mock-review-stat mock-diff-del">−2</span>
+                </div>
+                <div class="mock-review-file">
+                    <span class="mock-review-name">src/config.ts</span>
+                    <span class="mock-review-stat mock-diff-add">+1</span>
+                </div>
+            </div>
+            <div class="mock-actions">
+                <button class="mock-btn mock-btn-approve">Accept</button>
+                <button class="mock-btn mock-btn-deny">Reject</button>
+            </div>
+        </AttentionCard>
     </AttentionBar>
 
     <div class="bottom">
-        <div class="repos">
+        <div class="repos" use:overflowing>
             {#each repos as repo (repo.path)}
                 <RepoColumn>
                     <button
@@ -284,11 +312,7 @@
         </div>
 
         <div class="detail">
-            <DetailPane
-                agent={selectedAgent}
-                repo={selectedRepo}
-                {events}
-                onclose={() => (selection = null)} />
+            <DetailPane agent={selectedAgent} repo={selectedRepo} />
         </div>
     </div>
 </div>
@@ -296,15 +320,14 @@
 <style>
     .layout {
         display: grid;
-        grid-template-rows: auto minmax(0, 1fr);
+        grid-template-rows: 1fr minmax(0, 2fr);
         overflow: hidden;
         gap: 32px;
-        margin: 32px;
     }
 
     .bottom {
         display: grid;
-        grid-template-columns: 3fr 1fr;
+        grid-template-columns: auto minmax(512px, 1fr);
         gap: 32px;
         min-height: 0;
     }
@@ -320,11 +343,13 @@
             display: none;
         }
 
-        mask-image: linear-gradient(
-            to right,
-            black calc(100% - 64px),
-            transparent
-        );
+        &:global([data-overflowing]) {
+            mask-image: linear-gradient(
+                to right,
+                black calc(100% - 64px),
+                transparent
+            );
+        }
     }
 
     .detail {
@@ -361,5 +386,114 @@
         gap: 16px;
         font-size: 12px;
         color: var(--ctp-subtext0);
+    }
+
+    /* Mock attention card content */
+
+    .mock-command {
+        flex: 1;
+        margin: 0;
+        padding: 8px;
+        border-radius: 4px;
+        background: var(--ctp-mantle);
+        font-family: var(--stack-code);
+        font-size: 13px;
+        color: var(--ctp-text);
+        white-space: pre-wrap;
+    }
+
+    .mock-diff {
+        flex: 1;
+        margin: 0;
+        padding: 8px;
+        border-radius: 4px;
+        background: var(--ctp-mantle);
+        font-family: var(--stack-code);
+        font-size: 12px;
+        color: var(--ctp-text);
+        line-height: 1.4;
+        white-space: pre-wrap;
+    }
+
+    .mock-diff-file {
+        color: var(--ctp-subtext0);
+    }
+
+    .mock-diff-add {
+        color: var(--ctp-green);
+    }
+
+    .mock-diff-del {
+        color: var(--ctp-red);
+    }
+
+    .mock-input {
+        flex: 1;
+        resize: none;
+        padding: 8px;
+        border: 1px solid var(--ctp-overlay0);
+        border-radius: 4px;
+        background: var(--ctp-mantle);
+        font-family: var(--stack-code);
+        font-size: 13px;
+        color: var(--ctp-text);
+    }
+
+    .mock-input::placeholder {
+        color: var(--ctp-overlay1);
+    }
+
+    .mock-review {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .mock-review-file {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        padding: 4px 8px;
+        border-radius: 4px;
+        background: var(--ctp-mantle);
+        font-family: var(--stack-code);
+        font-size: 12px;
+    }
+
+    .mock-review-name {
+        flex: 1;
+        color: var(--ctp-text);
+    }
+
+    .mock-review-stat {
+        font-size: 11px;
+    }
+
+    .mock-actions {
+        display: flex;
+        justify-content: end;
+        gap: 8px;
+        margin-top: 8px;
+    }
+
+    .mock-btn {
+        padding: 4px 16px;
+        border: none;
+        border-radius: 4px;
+        font-family: var(--stack-ui);
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .mock-btn-approve {
+        background: var(--ctp-green);
+        color: var(--ctp-base);
+    }
+
+    .mock-btn-deny {
+        background: var(--ctp-surface1);
+        color: var(--ctp-text);
     }
 </style>

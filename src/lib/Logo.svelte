@@ -22,6 +22,8 @@
 
 <style>
     .layout {
+        margin: 8px 0;
+
         font-family: var(--stack-code);
         font-size: 24px;
 

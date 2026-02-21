@@ -55,7 +55,7 @@ A horizontal strip across the top containing **attention cards** — things that
 
 #### Repo Area
 
-A lookless horizontally-scrolling row of **repo columns**, one per repository. Each column is a lookless vertical stack (scrolls vertically, fades at the bottom) containing:
+A horizontally-scrolling row of **repo columns** (using lookless scrolling), one per repository. Each column is a vertical stack (also lookless-scrolling) containing:
 
 1. A **repo header pane** — the repository path, branch name, and agent count. Gets a peach border when any agents are active. Clickable to show repo details in the detail pane.
 2. **Agent cards** — buttons wrapping headerless panes, one per agent session (both active and historical). Each shows information about a running agent or past session.
@@ -105,7 +105,7 @@ To start a new agent session, the user clicks in the agent list (on a repo or a 
 
 - **`Pane`** — the core presentational component. A bordered box with an optional header and content area. Supports `stackedAbove`/`stackedBelow` flags to remove rounded corners for vertical stacking, and a `borderColor` prop for mode/status colouring.
 - **`AttentionBar`** / **`AttentionCard`** — the top-level attention strip and its items.
-- **`RepoColumn`** — a lookless vertical scrolling container with hidden scrollbar and bottom fade.
+- **`RepoColumn`** — a vertical scrolling container using the lookless scrolling pattern.
 - **`AgentCard`** — a button wrapping a headerless Pane with mode-coloured border.
 - **`DetailPane`** — the right-hand panel, switching between activity, agent, and repo views.
 
@@ -128,6 +128,35 @@ Font stacks are defined in `theme.css`, including:
 - `--stack-ui` — body text, labels
 - `--stack-industrial` — condensed headings, section labels, category tags
 - `--stack-code` — monospace for code, identifiers, paths, hashes
+
+### Lookless Scrolling
+
+Scrollable regions use a consistent "lookless" pattern: the native scrollbar is hidden, and a CSS `mask-image` gradient fades content to transparent at the scroll edge to hint that more content exists. The fade region is 64px. The fade only appears when the element actually overflows, controlled by the `overflowing` Svelte action (`src/lib/overflowing.ts`) which sets a `data-overflowing` attribute via `ResizeObserver`.
+
+```css
+scrollbar-width: none;              /* Firefox */
+&::-webkit-scrollbar { display: none; }  /* Chrome/Safari */
+
+&:global([data-overflowing]) {    /* :global() needed — attribute is set by JS action, not template */
+    mask-image: linear-gradient(
+        to <direction>,              /* right for horizontal, bottom for vertical */
+        black calc(100% - 64px),
+        transparent
+    );
+}
+```
+
+```svelte
+<script>
+    import { overflowing } from "$lib/overflowing";
+</script>
+<div use:overflowing> ... </div>
+```
+
+Used by:
+- **AttentionBar** — horizontal scroll, fades right
+- **Repo row** (`.repos` in `+page.svelte`) — horizontal scroll, fades right
+- **RepoColumn** — vertical scroll, fades bottom
 
 ## Development Tools
 
