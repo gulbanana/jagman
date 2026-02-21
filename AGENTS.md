@@ -28,6 +28,8 @@ Each agent runs in its own **Jujutsu workspace** — a separate directory with i
 - Agent work is tracked as ordinary jj commits, visible in the repo's history
 - No branch management is needed — jj's branchless workflow handles isolation naturally
 
+The dashboard's detail pane will embed [**GG**](https://github.com/gulbanana/gg) for repo and revision views. GG is a sister project to JAGMAN which runs as a local web server (`gg web`), and some of its views will be displayed in iframes within the JAGMAN dashboard.
+
 ### Persistence
 
 Session history, agent configuration, and other state are stored in a local **SQLite** database.
@@ -107,7 +109,7 @@ To start a new agent session, the user clicks in the agent list (on a repo or a 
 - **`AttentionBar`** / **`AttentionCard`** — the top-level attention strip and its items.
 - **`RepoColumn`** — a vertical scrolling container using the lookless scrolling pattern.
 - **`AgentCard`** — a button wrapping a headerless Pane with mode-coloured border.
-- **`DetailPane`** — the right-hand panel, switching between activity, agent, and repo views.
+- **Detail pane** — the right-hand panel contains a `Pane` with a client-side header and an iframe. The iframe loads routes under `/detail/` (agent output, repo views via GG). Detail routes use the root layout (theme only, no sidebars) and render with a `--ctp-crust` background to match the Pane content area.
 
 ## Design System
 

@@ -3,7 +3,6 @@
     import AttentionCard from "$lib/AttentionCard.svelte";
     import RepoColumn from "$lib/RepoColumn.svelte";
     import AgentCard from "$lib/AgentCard.svelte";
-    import DetailPane from "$lib/DetailPane.svelte";
     import Pane from "$lib/Pane.svelte";
     import { overflowing } from "$lib/overflowing";
     import type { Repo } from "$lib/types";
@@ -16,22 +15,23 @@
     const reposQuery = getRepos();
     const repos = $derived(reposQuery.current ?? []);
 
-    const allAgents = $derived(repos.flatMap((r) => r.agents));
-
     let selection: Selection = $state({ kind: "agent", id: "a1" });
 
-    const selectedAgent = $derived.by(() => {
+    const allAgents = $derived(repos.flatMap((r) => r.agents));
+
+    const detailSrc = $derived.by(() => {
         const s = selection;
         return s.kind === "agent"
-            ? (allAgents.find((a) => a.id === s.id) ?? null)
-            : null;
+            ? `/detail/agent/${s.id}`
+            : `/detail/repo/${s.path}`;
     });
 
-    const selectedRepo = $derived.by(() => {
+    const detailLabel = $derived.by(() => {
         const s = selection;
-        return s.kind === "repo"
-            ? (repos.find((r) => r.path === s.path) ?? null)
-            : null;
+        if (s.kind === "agent") {
+            return allAgents.find((a) => a.id === s.id)?.name ?? s.id;
+        }
+        return s.path;
     });
 
     function selectAgent(id: string) {
@@ -154,7 +154,12 @@
         </div>
 
         <div class="detail">
-            <DetailPane agent={selectedAgent} repo={selectedRepo} />
+            <Pane>
+                {#snippet header()}
+                    <span class="detail-label">{detailLabel}</span>
+                {/snippet}
+                <iframe src={detailSrc} title="Detail pane"></iframe>
+            </Pane>
         </div>
     </div>
 </div>
@@ -207,10 +212,22 @@
     .detail {
         display: flex;
         flex-direction: column;
+        min-height: 0;
     }
 
     .detail > :global(*) {
         flex: 1;
+    }
+
+    .detail iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+
+    .detail-label {
+        font-family: var(--stack-code);
+        font-weight: 600;
     }
 
     .repo-header {
