@@ -7,7 +7,7 @@ describe('/+page.svelte', () => {
 	it('should render h1', async () => {
 		render(Page);
 
-		const heading = page.getByRole('heading', { level: 1 });
-		await expect.element(heading).toBeInTheDocument();
+		const logo = page.getByText('Here is a repository with some agents.');
+		await expect.element(logo).toBeInTheDocument();
 	});
 });
