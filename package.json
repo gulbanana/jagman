@@ -30,6 +30,7 @@
 	},
 	"dependencies": {
 		"@catppuccin/palette": "^1.7.1",
+		"feather-icons": "^4.29.2",
 		"modern-normalize": "^3.0.1"
 	}
 }

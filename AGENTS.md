@@ -178,3 +178,7 @@ After calling the list-sections tool, you MUST analyze the returned documentatio
 
 Analyzes Svelte code and returns issues and suggestions.
 You MUST use this tool whenever writing Svelte code before sending it to the user. Keep calling it until no issues or suggestions are returned.
+
+### Type Checking
+
+Run `npm run check` to check for TypeScript errors. This runs `svelte-kit sync` followed by `svelte-check`.

@@ -1,7 +1,6 @@
 <script lang="ts">
 	import "$lib/theme.css";
 	import favicon from "$lib/assets/favicon.svg";
-	import Logo from "$lib/Logo.svelte";
 	import RightSidebar from "$lib/RightSidebar.svelte";
 	import LeftSidebar from "$lib/LeftSidebar.svelte";
 
@@ -29,7 +28,7 @@
 <style>
 	.layout {
 		display: grid;
-		grid-template-columns: 128px 1fr 128px;
+		grid-template-columns: 192px 1fr 192px;
 		height: 100dvh;
 		overflow: hidden;
 	}

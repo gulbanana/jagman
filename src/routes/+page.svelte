@@ -187,14 +187,16 @@
     let selection: Selection = $state({ kind: "agent", id: "a1" });
 
     const selectedAgent = $derived.by(() => {
-        return selection.kind === "agent"
-            ? (allAgents.find((a) => a.id === selection.id) ?? null)
+        const s = selection;
+        return s.kind === "agent"
+            ? (allAgents.find((a) => a.id === s.id) ?? null)
             : null;
     });
 
     const selectedRepo = $derived.by(() => {
-        return selection.kind === "repo"
-            ? (repos.find((r) => r.path === selection.path) ?? null)
+        const s = selection;
+        return s.kind === "repo"
+            ? (repos.find((r) => r.path === s.path) ?? null)
             : null;
     });
 
