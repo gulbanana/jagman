@@ -8,7 +8,6 @@
     <li><a href="/"><Icon name="home" /> Dashboard</a></li>
     <li><a href="/settings"><Icon name="settings" /> Settings</a></li>
     <li><a href="/widgets"><Icon name="package" /> Widgets</a></li>
-    <li><a href="/frob"><Icon name="help-circle" /> Frobnications</a></li>
 </ul>
 
 <style>
@@ -21,6 +20,6 @@
         flex-direction: column;
         gap: 24px;
 
-        font-size: 24px;
+        font-size: 16px;
     }
 </style>

@@ -27,9 +27,12 @@
 
 <style>
 	.layout {
-		display: grid;
-		grid-template-columns: 192px 1fr 192px;
+		min-width: 1366px;
+		min-height: 768px;
 		height: 100dvh;
+
+		display: grid;
+		grid-template-columns: 128px 1fr 128px;
 		overflow: hidden;
 	}
 
@@ -52,9 +55,16 @@
 	}
 
 	.center {
+		padding: 32px;
+
 		display: flex;
 		flex-direction: column;
-		padding: 32px;
 		overflow: hidden;
+	}
+
+	@media (max-width: 1919px) {
+		.center {
+			padding: 16px;
+		}
 	}
 </style>

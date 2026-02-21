@@ -320,23 +320,33 @@
 </div>
 
 <style>
+    .layout,
+    .bottom,
+    .repos {
+        gap: 32px;
+    }
+    @media (max-width: 1919px) {
+        .layout,
+        .bottom,
+        .repos {
+            gap: 16px;
+        }
+    }
+
     .layout {
         display: grid;
         grid-template-rows: 1fr minmax(0, 2fr);
         overflow: hidden;
-        gap: 32px;
     }
 
     .bottom {
         display: grid;
         grid-template-columns: auto minmax(512px, 1fr);
-        gap: 32px;
         min-height: 0;
     }
 
     .repos {
         display: flex;
-        gap: 32px;
         overflow-x: auto;
         min-width: 0;
 
