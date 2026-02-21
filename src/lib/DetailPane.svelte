@@ -1,26 +1,6 @@
 <script lang="ts">
 	import Pane from "./Pane.svelte";
-
-	type Agent = {
-		id: string;
-		name: string;
-		status: "running" | "waiting" | "completed";
-		detail: string;
-		log: string[];
-	};
-
-	type Repo = {
-		path: string;
-		branch: string;
-		agents: { id: string; name: string; status: string }[];
-	};
-
-	type Commit = {
-		hash: string;
-		author: string;
-		message: string;
-		age: string;
-	};
+	import type { Agent, Repo, Commit } from "$lib/types";
 
 	let {
 		agent = null,
