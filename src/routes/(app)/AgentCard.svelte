@@ -5,14 +5,14 @@
 		name,
 		status,
 		mode,
-		detail,
+		slug,
 		selected = false,
 		onclick
 	}: {
 		name: string;
 		status: "running" | "waiting" | "completed";
 		mode?: "standard" | "plan" | "yolo";
-		detail: string;
+		slug: string;
 		selected?: boolean;
 		onclick: () => void;
 	} = $props();
@@ -38,7 +38,7 @@
 			<span class="dot" style:background={statusColors[status]}></span>
 			<span class="info">
 				<span class="agent-name">{name}</span>
-				<span class="detail">{detail}</span>
+				<span class="slug">{slug}</span>
 			</span>
 		</div>
 	</Pane>
@@ -90,7 +90,7 @@
 		font-weight: 600;
 	}
 
-	.detail {
+	.slug {
 		font-size: 12px;
 		color: var(--ctp-subtext0);
 	}

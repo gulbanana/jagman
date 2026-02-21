@@ -18,12 +18,13 @@
     const cardsQuery = getAttentionCards();
     const cards = $derived(cardsQuery.current ?? []);
 
-    let selection: Selection = $state({ kind: "agent", id: "a1" });
+    let selection: Selection | null = $state(null);
 
     const allAgents = $derived(repos.flatMap((r) => r.agents));
 
     const detailSrc = $derived.by(() => {
         const s = selection;
+        if (!s) return `/detail/agent/none`;
         return s.kind === "agent"
             ? `/detail/agent/${s.id}`
             : `/detail/repo/${s.path}`;
@@ -31,6 +32,7 @@
 
     const detailLabel = $derived.by(() => {
         const s = selection;
+        if (!s) return "";
         if (s.kind === "agent") {
             return allAgents.find((a) => a.id === s.id)?.name ?? s.id;
         }
@@ -162,7 +164,7 @@
                                 name={agent.name}
                                 status={agent.status}
                                 mode={agent.mode}
-                                detail={agent.detail}
+                                slug={agent.slug}
                                 selected={selection?.kind === "agent" &&
                                     selection.id === agent.id}
                                 onclick={() => selectAgent(agent.id)} />

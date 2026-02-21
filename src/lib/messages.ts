@@ -6,7 +6,7 @@ export type Agent = {
 	name: string;
 	status: AgentStatus;
 	mode?: AgentMode;
-	detail: string;
+	slug: string;
 	log: string[];
 };
 
