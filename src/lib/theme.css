@@ -3,6 +3,16 @@
 
 :root {
     --stack-ui: system-ui, sans-serif;
+    --stack-rounded: ui-rounded,
+        'Hiragino Maru Gothic ProN',
+        Quicksand,
+        Comfortaa,
+        Manjari,
+        'Arial Rounded MT',
+        'Arial Rounded MT Bold',
+        Calibri,
+        source-sans-pro,
+        sans-serif;
     --stack-industrial: Bahnschrift,
         'DIN Alternate',
         'Franklin Gothic Medium',

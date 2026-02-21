@@ -26,7 +26,8 @@
 	.layout {
 		display: grid;
 		grid-template-columns: auto 1fr auto;
-		min-height: 100dvh;
+		height: 100dvh;
+		overflow: hidden;
 	}
 
 	.left,

@@ -4,18 +4,19 @@
 	let { children }: { children: Snippet } = $props();
 </script>
 
-<div class="box">
+<div class="bar">
 	{@render children()}
 </div>
 
 <style>
-	.box {
+	.bar {
+		display: flex;
+		align-items: start;
+		gap: 16px;
 		padding: 8px;
-
-		border: 2px solid;
+		border: 2px solid var(--ctp-overlay0);
 		border-radius: 8px;
-
-		border-color: var(--ctp-overlay0);
-		background-color: var(--ctp-crust);
+		background: var(--ctp-crust);
+		overflow-x: auto;
 	}
 </style>

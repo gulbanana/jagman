@@ -43,34 +43,91 @@ Session history, agent configuration, and other state are stored in a local **SQ
 
 ### UI Structure
 
-The UI has two main areas:
+The main dashboard is a two-row grid flanked by sidebars. The top row is the attention bar; the bottom row is split into a horizontally-scrolling repo area and a detail pane.
 
-#### Agent Area
+#### Attention Bar
 
-A horizontal layout of columns, one per repository. Each column shows repository information in a header and compact status cards for agents working on that repo (both active and past sessions). This is the overview — it tells the user at a glance what's running and where.
-
-Clicking an agent in the list opens a corresponding item in the attention area (to launch a new agent, view a running agent's request, etc.).
-
-#### Attention Area
-
-The primary interaction surface. This is a horizontal accordion of **attention cards** — each card represents something that needs or accepts user input:
+A horizontal strip across the top containing **attention cards** — things that need user action:
 
 - **Permission requests** — an agent needs approval to run a command, edit a file, etc.
 - **Prompt entry** — the user is composing instructions for a new or existing agent
 - **Code review** — an agent has produced changes for the user to review
 
-The focused card expands to fill available space. On wider screens (responsive), multiple cards can display side-by-side.
+#### Repo Area
+
+A lookless horizontally-scrolling row of **repo columns**, one per repository. Each column is a lookless vertical stack (scrolls vertically, fades at the bottom) containing:
+
+1. A **repo header pane** — the repository path, branch name, and agent count. Gets a peach border when any agents are active. Clickable to show repo details in the detail pane.
+2. **Agent cards** — buttons wrapping headerless panes, one per agent session (both active and historical). Each shows information about a running agent or past session.
+
+Agent cards have a coloured border indicating their mode:
+
+- `--ctp-peach` — standard mode
+- `--ctp-blue` — plan mode
+- `--ctp-red` — yolo mode (all permissions bypassed)
+- No special colour — completed/inactive sessions
+
+Agent status is shown by a coloured dot:
+
+- `--ctp-green` — running
+- `--ctp-yellow` — waiting (for permission, input, etc.)
+- `--ctp-overlay1` — completed
+
+Clicking an agent card shows its details in the detail pane.
+
+#### Detail Pane
+
+The right-hand panel, sized at 1fr of a 3fr+1fr grid (25% of available space). Shows one of three views:
+
+- **Activity summary** (default) — a timestamped feed of recent events across all agents
+- **Agent detail** — the selected agent's streaming log or session history
+- **Repo detail** — the selected repo's branch info and recent jj change log
+
+Has a header showing the current selection and a close button to return to the activity view.
+
+#### Layout Grid
+
+```
+┌─────────────────────────────────────────────────┐
+│  Attention bar  [ card ] [ card ] [ card ...►   │
+├──────────────────────────────┬──────────────────┤
+│  Repo columns (h-scroll)     │  Detail pane     │
+│  [repo1] [repo2] [repo3...►  │  (activity,      │
+│                              │   agent, or repo) │
+└──────────────────────────────┴──────────────────┘
+```
 
 #### Launch Flow
 
 To start a new agent session, the user clicks in the agent list (on a repo or a "new agent" control), which opens an attention card where they can enter a prompt and configure the session before launching.
 
-#### Future: Drill-Down Views
+### Component Architecture
 
-Not in the MVP, but planned:
+- **`Pane`** — the core presentational component. A bordered box with an optional header and content area. Supports `stackedAbove`/`stackedBelow` flags to remove rounded corners for vertical stacking, and a `borderColor` prop for mode/status colouring.
+- **`AttentionBar`** / **`AttentionCard`** — the top-level attention strip and its items.
+- **`RepoColumn`** — a lookless vertical scrolling container with hidden scrollbar and bottom fade.
+- **`AgentCard`** — a button wrapping a headerless Pane with mode-coloured border.
+- **`DetailPane`** — the right-hand panel, switching between activity, agent, and repo views.
 
-- **Streaming output** — open an attention card showing an agent's live output
-- **Repository view** — see a repo's jj history, where agents are working, and their commits
+## Design System
+
+### Colors
+
+All colors must come from the Catppuccin palette via `--ctp-*` CSS variables defined in `src/lib/theme.css`. Never use raw hex, rgb, or named colors for visible UI elements. (`transparent`, `black`/`transparent` in CSS masks, and `currentColor` are permitted where semantically appropriate.)
+
+### Metrics
+
+All spatial lengths — padding, margin, gap, border-radius, explicit width/height, min-width/min-height — must be **powers of two**: 1, 2, 4, 8, 16, 32, 64, 128, 256px.
+
+This does not apply to font-size, letter-spacing, line-height, or values derived from font metrics (e.g. Logo grid rows matching its font-size).
+
+### Font Stacks
+
+Font stacks are defined in `theme.css`, including:
+
+- `--stack-ui` — body text, labels
+- `--stack-industrial` — condensed headings, section labels, category tags
+- `--stack-code` — monospace for code, identifiers, paths, hashes
 
 ## Development Tools
 
