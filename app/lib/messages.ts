@@ -39,13 +39,6 @@ export type AgentSession = {
 	log: LogEntry[];
 };
 
-export type Commit = {
-	hash: string;
-	author: string;
-	message: string;
-	age: string;
-};
-
 export type AttentionCardType = "permission-command" | "permission-edit" | "prompt" | "review";
 
 export type AttentionCardData = {

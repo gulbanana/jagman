@@ -10,9 +10,12 @@ crate-type = ["cdylib"]
 path = "src/lib.rs"
 
 [dependencies]
-napi = { version = "3", default-features = false, features = ["napi6", "serde-json"] }
+napi = { version = "3", default-features = false, features = ["napi6", "serde-json", "tokio_rt"] }
 napi-derive = "3"
 gg-cli = { path = "../gg" }
+tokio = { version = "1", features = ["net", "rt-multi-thread", "sync", "macros"] }
+axum = "0.8"
+log = "0.4"
 
 [build-dependencies]
 napi-build = "2"

@@ -198,7 +198,7 @@
         </div>
 
         <div class="detail">
-            <Pane>
+            <Pane flush={selection?.kind === "repo"}>
                 {#snippet header()}
                     {#if detailIcon?.kind === "brand"}
                         <picture>

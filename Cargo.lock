@@ -3603,10 +3603,13 @@ checksum = "6800badb6cb2082ffd7b6a67e6125bb39f18782f793520caee8cb8846be06112"
 name = "libgg"
 version = "0.0.1"
 dependencies = [
+ "axum",
  "gg-cli",
+ "log",
  "napi",
  "napi-build",
  "napi-derive",
+ "tokio",
 ]
 
 [[package]]
@@ -3913,6 +3916,7 @@ dependencies = [
  "rustc-hash",
  "serde",
  "serde_json",
+ "tokio",
 ]
 
 [[package]]

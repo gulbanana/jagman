@@ -9,6 +9,7 @@
 		animated = false,
 		stackedAbove = false,
 		stackedBelow = false,
+		flush = false,
 	}: {
 		header?: Snippet;
 		children: Snippet;
@@ -16,6 +17,7 @@
 		animated?: boolean;
 		stackedAbove?: boolean;
 		stackedBelow?: boolean;
+		flush?: boolean;
 	} = $props();
 
 	const modeColors: Record<SessionMode, { base: string; spark: string }> = {
@@ -40,7 +42,7 @@
 			{@render header()}
 		</div>
 	{/if}
-	<div class="content">
+	<div class="content" class:flush>
 		{@render children()}
 	</div>
 </div>
@@ -132,5 +134,9 @@
 	.content {
 		grid-row: 2;
 		padding: 8px;
+	}
+
+	.content.flush {
+		padding: 0;
 	}
 </style>
