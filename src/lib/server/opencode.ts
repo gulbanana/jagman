@@ -1,8 +1,5 @@
-import {
-	createOpencode,
-	createOpencodeClient,
-	type OpencodeClient
-} from '@opencode-ai/sdk';
+import { spawn, type ChildProcess } from 'node:child_process';
+import { createOpencodeClient, type OpencodeClient } from '@opencode-ai/sdk';
 import type {
 	Session as OcSession,
 	SessionStatus as OcSessionStatus,
@@ -20,8 +17,13 @@ import type { AgentSession, LogEntry, SessionMode, SessionStatus } from '../mess
  * The OpenCode server supports multi-directory operation via a per-client
  * `directory` header. JAGMAN starts a single server process and creates
  * one client per project directory to scope requests appropriately.
+ *
+ * We spawn the server process ourselves rather than using the SDK's
+ * `createOpencodeServer`, because the SDK uses `spawn('opencode', ...)`
+ * without `shell: true`, which fails on Windows where the `opencode`
+ * binary is behind a `.cmd` shim.
  */
-let serverHandle: { url: string; close(): void } | null = null;
+let serverHandle: { url: string; proc: ChildProcess } | null = null;
 const clients = new Map<string, OpencodeClient>();
 
 /** Session ID → repo path, populated during loadRepos for fast lookups in loadSession. */
@@ -29,8 +31,61 @@ const sessionRepoCache = new Map<string, string>();
 
 async function ensureServer(): Promise<string> {
 	if (!serverHandle) {
-		const { server } = await createOpencode({ port: 0 });
-		serverHandle = server;
+		const timeout = 5000;
+		const args = ['serve', '--hostname=127.0.0.1', '--port=0'];
+		const proc = spawn('opencode', args, {
+			shell: true,
+			env: {
+				...process.env,
+				OPENCODE_CONFIG_CONTENT: JSON.stringify({})
+			}
+		});
+
+		const url = await new Promise<string>((resolve, reject) => {
+			const id = setTimeout(() => {
+				reject(new Error(`Timeout waiting for opencode server to start after ${timeout}ms`));
+			}, timeout);
+
+			let output = '';
+
+			proc.stdout?.on('data', (chunk: Buffer) => {
+				output += chunk.toString();
+				const lines = output.split('\n');
+				for (const line of lines) {
+					if (line.startsWith('opencode server listening')) {
+						const match = line.match(/on\s+(https?:\/\/[^\s]+)/);
+						if (!match) {
+							clearTimeout(id);
+							reject(new Error(`Failed to parse server url from output: ${line}`));
+							return;
+						}
+						clearTimeout(id);
+						resolve(match[1]);
+						return;
+					}
+				}
+			});
+
+			proc.stderr?.on('data', (chunk: Buffer) => {
+				output += chunk.toString();
+			});
+
+			proc.on('exit', (code) => {
+				clearTimeout(id);
+				let msg = `opencode server exited with code ${code}`;
+				if (output.trim()) {
+					msg += `\nServer output: ${output}`;
+				}
+				reject(new Error(msg));
+			});
+
+			proc.on('error', (error) => {
+				clearTimeout(id);
+				reject(error);
+			});
+		});
+
+		serverHandle = { url, proc };
 	}
 	return serverHandle.url;
 }
@@ -49,7 +104,7 @@ async function getClient(directory: string): Promise<OpencodeClient> {
 /** Shut down the managed OpenCode server and clear all cached state. */
 export function closeOpenCodeServers(): void {
 	if (serverHandle) {
-		serverHandle.close();
+		serverHandle.proc.kill();
 		serverHandle = null;
 	}
 	clients.clear();
