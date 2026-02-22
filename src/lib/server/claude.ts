@@ -6,6 +6,7 @@ import type { AgentBrand } from '../brands';
 import type { AgentSession, LogEntry } from '../messages';
 import {
 	readFirstUserRecord,
+	readSessionSummary,
 	readAllRecords,
 	getUserText,
 	getAssistantText,
@@ -14,6 +15,7 @@ import {
 	isMetaMessage,
 	type UserRecord
 } from './jsonl';
+import type { SessionMode } from '../messages';
 
 const REPO_PATHS = [
 	'C:\\Users\\banana\\Documents\\code\\jagman',
@@ -29,17 +31,23 @@ let projectIndex: Map<string, string> | null = null;
 interface SessionHeader {
 	sessionId: string;
 	slug: string | null;
+	mode: SessionMode | null;
 	timestamp: string;
 	gitBranch: string;
 }
 
-function headerFromRecord(record: UserRecord): SessionHeader {
-	return {
-		sessionId: record.sessionId,
-		slug: record.slug,
-		timestamp: record.timestamp,
-		gitBranch: record.gitBranch
-	};
+export function mapPermissionMode(permissionMode: string | null): SessionMode | null {
+	switch (permissionMode) {
+		case 'default':
+		case 'acceptEdits':
+			return 'standard';
+		case 'plan':
+			return 'plan';
+		case 'bypassPermissions':
+			return 'yolo';
+		default:
+			return null;
+	}
 }
 
 /**
@@ -113,9 +121,18 @@ async function readProjectSessions(
 
 	const headers = await Promise.all(
 		jsonlFiles.map(async (file): Promise<SessionHeader | null> => {
-			const record = await readFirstUserRecord(join(projectPath, file));
-			if (!record) return null;
-			return headerFromRecord(record);
+			const filePath = join(projectPath, file);
+			const first = await readFirstUserRecord(filePath);
+			if (!first) return null;
+			const summary = await readSessionSummary(filePath);
+			if (!summary.hasContent) return null;
+			return {
+				sessionId: first.sessionId,
+				slug: summary.slug,
+				mode: mapPermissionMode(summary.permissionMode),
+				timestamp: first.timestamp,
+				gitBranch: first.gitBranch
+			};
 		})
 	);
 
@@ -132,7 +149,7 @@ async function readProjectSessions(
 		id: session.sessionId,
 		// TEMPORARY: fake active statuses for UI testing
 		status: index === 0 ? 'running' : index === 1 ? 'waiting' : 'completed',
-		mode: index < 2 ? 'standard' : null,
+		mode: session.mode,
 		slug: session.slug ?? session.sessionId,
 		timestamp: session.timestamp
 	}));

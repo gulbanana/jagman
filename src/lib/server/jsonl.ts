@@ -22,6 +22,7 @@ export type UserRecord = {
 	timestamp: string;
 	sessionId: string;
 	slug: string | null;
+	permissionMode: string | null;
 	cwd: string;
 	gitBranch: string;
 	isSidechain: boolean;
@@ -66,6 +67,7 @@ function parseRecord(line: string): SessionRecord | null {
 			timestamp: (obj.timestamp as string) ?? '',
 			sessionId: (obj.sessionId as string) ?? '',
 			slug: (obj.slug as string) ?? null,
+			permissionMode: (obj.permissionMode as string) ?? null,
 			cwd: (obj.cwd as string) ?? '',
 			gitBranch: (obj.gitBranch as string) ?? '',
 			isSidechain: (obj.isSidechain as boolean) ?? false,
@@ -136,6 +138,36 @@ export async function readFirstUserRecord(filePath: string): Promise<UserRecord 
 		}
 	});
 	return result;
+}
+
+export type SessionSummary = {
+	slug: string | null;
+	permissionMode: string | null;
+	hasContent: boolean;
+};
+
+/**
+ * Scan all records in a session file and return the last non-null
+ * slug and permissionMode seen, plus whether the session has any
+ * displayable content (non-meta user messages or assistant responses).
+ */
+export async function readSessionSummary(filePath: string): Promise<SessionSummary> {
+	let slug: string | null = null;
+	let permissionMode: string | null = null;
+	let hasContent = false;
+	await scanSession(filePath, (record) => {
+		if (record.type === 'user') {
+			if (record.slug !== null) slug = record.slug;
+			if (record.permissionMode !== null) permissionMode = record.permissionMode;
+			if (!hasContent && !record.isSidechain) {
+				const text = getUserText(record);
+				if (text && !isMetaMessage(record)) hasContent = true;
+			}
+		} else if (record.type === 'assistant' && !record.isSidechain) {
+			hasContent = true;
+		}
+	});
+	return { slug, permissionMode, hasContent };
 }
 
 /**
