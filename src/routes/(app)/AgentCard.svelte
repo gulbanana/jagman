@@ -33,7 +33,7 @@
 					width="16"
 					height="16" />
 			</picture>
-			<span class="name">{session.slug}</span>
+			<span class="title">{session.title}</span>
 			{#if session.lastAssistantText}
 				<span class="details">{session.lastAssistantText}</span>
 			{:else}
@@ -71,20 +71,22 @@
 	.layout {
 		height: 100%;
 		display: grid;
-		grid-template-columns: 1fr auto;
+		grid-template-columns: auto 1fr;
 		grid-template-rows: auto 1fr auto;
 		grid-template-areas:
-			"name brand"
+			"title title"
 			"details details"
-			"timestamp timestamp";
+			"brand timestamp";
 		gap: 8px;
 	}
 
 	.brand {
 		grid-area: brand;
+		align-self: end;
 	}
 
-	.name {
+	.title {
+		grid-area: title;
 		font-family: var(--stack-code);
 		font-size: 13px;
 		font-weight: 600;

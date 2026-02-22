@@ -27,11 +27,17 @@ const sessionFileCache = new Map<string, string>();
 
 interface SessionHeader {
 	sessionId: string;
-	slug: string | null;
+	title: string;
 	mode: SessionMode | null;
 	timestamp: number;
 	gitBranch: string;
 	lastAssistantText: string | null;
+}
+
+/** Extract the first line from a (possibly multi-line) string. */
+function firstLine(text: string): string {
+	const nl = text.indexOf('\n');
+	return nl === -1 ? text : text.slice(0, nl);
 }
 
 export function mapPermissionMode(permissionMode: string | null): SessionMode | null {
@@ -128,7 +134,7 @@ async function readProjectSessions(
 
 			return {
 				sessionId: overview.sessionId,
-				slug: overview.slug,
+				title: overview.firstUserText ? firstLine(overview.firstUserText) : overview.sessionId,
 				mode: mapPermissionMode(overview.permissionMode),
 				timestamp: new Date(overview.lastTimestamp).getTime(),
 				gitBranch: overview.gitBranch,
@@ -146,7 +152,7 @@ async function readProjectSessions(
 		id: session.sessionId,
 		status: 'inactive',
 		mode: session.mode,
-		slug: session.slug ?? session.sessionId,
+		title: session.title,
 		timestamp: session.timestamp,
 		lastAssistantText: session.lastAssistantText
 	}));
@@ -254,9 +260,12 @@ export default class ClaudeAgent implements Agent {
 			}
 		}
 
+		const firstUserText = firstUser ? getUserText(firstUser) : null;
+		const title = firstUserText && !isMetaMessage(firstUser!) ? firstLine(firstUserText) : id;
+
 		return {
 			id,
-			slug: firstUser?.slug ?? id,
+			title,
 			log
 		};
 	}

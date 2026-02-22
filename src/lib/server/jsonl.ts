@@ -127,7 +127,7 @@ export async function scanSession(
 
 /**
  * Read just the first user record from a session file (early exit).
- * Used for cheaply extracting session metadata (sessionId, slug, cwd, gitBranch).
+ * Used for cheaply extracting session metadata (sessionId, cwd, gitBranch).
  */
 export async function readFirstUserRecord(filePath: string): Promise<UserRecord | null> {
 	let result: UserRecord | null = null;
@@ -144,28 +144,29 @@ export type SessionOverview = {
 	sessionId: string;
 	cwd: string;
 	gitBranch: string;
-	slug: string | null;
 	permissionMode: string | null;
 	hasContent: boolean;
 	lastTimestamp: string;
 	lastAssistantText: string | null;
+	firstUserText: string | null;
 };
 
 /**
  * Single-pass scan of a session file that extracts everything needed to
  * list the session: identity fields from the first user record, the
- * last-seen slug and permissionMode, whether displayable content exists,
- * and the timestamp of the last record (for sorting).
+ * permissionMode, whether displayable content exists, the first user
+ * message text (for title derivation), and the timestamp of the last
+ * record (for sorting).
  */
 export async function readSessionOverview(filePath: string): Promise<SessionOverview | null> {
 	let sessionId: string | null = null;
 	let cwd = '';
 	let gitBranch = '';
-	let slug: string | null = null;
 	let permissionMode: string | null = null;
 	let hasContent = false;
 	let lastTimestamp = '';
 	let lastAssistantText: string | null = null;
+	let firstUserText: string | null = null;
 
 	await scanSession(filePath, (record) => {
 		if (record.timestamp > lastTimestamp) {
@@ -178,11 +179,13 @@ export async function readSessionOverview(filePath: string): Promise<SessionOver
 				cwd = record.cwd;
 				gitBranch = record.gitBranch;
 			}
-			if (record.slug !== null) slug = record.slug;
 			if (record.permissionMode !== null) permissionMode = record.permissionMode;
-			if (!hasContent && !record.isSidechain) {
+			if (!record.isSidechain && firstUserText === null) {
 				const text = getUserText(record);
-				if (text && !isMetaMessage(record)) hasContent = true;
+				if (text && !isMetaMessage(record)) {
+					hasContent = true;
+					firstUserText = text;
+				}
 			}
 		} else if (record.type === 'assistant' && !record.isSidechain) {
 			hasContent = true;
@@ -193,7 +196,7 @@ export async function readSessionOverview(filePath: string): Promise<SessionOver
 
 	if (!sessionId) return null;
 
-	return { sessionId, cwd, gitBranch, slug, permissionMode, hasContent, lastTimestamp, lastAssistantText };
+	return { sessionId, cwd, gitBranch, permissionMode, hasContent, lastTimestamp, lastAssistantText, firstUserText };
 }
 
 /**
@@ -211,12 +214,18 @@ export async function readAllRecords(filePath: string): Promise<SessionRecord[]>
 
 // -- Text extraction helpers --
 
+/** Check if a text block is an IDE context tag injected by the editor. */
+function isIdeTag(text: string): boolean {
+	const trimmed = text.trimStart();
+	return trimmed.startsWith('<ide_selection') || trimmed.startsWith('<ide_opened_file');
+}
+
 /** Extract the plain text from a user record's content. */
 export function getUserText(record: UserRecord): string {
 	const content = record.message.content;
 	if (typeof content === 'string') return content.trim();
 	return content
-		.filter((b): b is TextBlock => b.type === 'text' && b.text.trim() !== '')
+		.filter((b): b is TextBlock => b.type === 'text' && b.text.trim() !== '' && !isIdeTag(b.text))
 		.map((b) => b.text)
 		.join('\n')
 		.trim();

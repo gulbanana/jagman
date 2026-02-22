@@ -207,7 +207,7 @@ export default class OpenCodeAgent implements Agent {
 
 		return {
 			id: session.id,
-			slug: session.title || session.id,
+			title: session.title || session.id,
 			status: mapOcStatus(statusMap[session.id]),
 			mode,
 			timestamp: session.time.updated,
@@ -299,7 +299,7 @@ export default class OpenCodeAgent implements Agent {
 
 		return {
 			id,
-			slug: session.title || id,
+			title: session.title || id,
 			log
 		};
 	}

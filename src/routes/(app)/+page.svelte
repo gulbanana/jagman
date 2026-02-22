@@ -37,7 +37,7 @@
         const s = selection;
         if (!s) return "";
         if (s.kind === "agent") {
-            return allAgents.find((a) => a.id === s.id)?.slug;
+            return allAgents.find((a) => a.id === s.id)?.title;
         }
         return s.path;
     });
@@ -214,7 +214,7 @@
                     {:else if detailIcon?.kind === "feather"}
                         <Icon name={detailIcon.name} />
                     {/if}
-                    <span class="detail-label">{detailLabel}</span>
+                    <div class="detail-label">{detailLabel}</div>
                 {/snippet}
                 <div class="iframe-container">
                     <iframe
@@ -311,6 +311,10 @@
     .detail-label {
         font-family: var(--stack-code);
         font-weight: 600;
+
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
     }
 
     .status-message {

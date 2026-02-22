@@ -18,7 +18,7 @@ export type Repo = {
 export type RepoSession = {
 	brand: AgentBrand,
 	id: string;
-	slug: string;
+	title: string;
 	status: SessionStatus;
 	mode: SessionMode | null;
 	timestamp: number;
@@ -33,7 +33,7 @@ export type LogEntry = UserEntry | AssistantEntry | ToolUseEntry;
 export type AgentSession = {
 	brand: AgentBrand,
 	id: string;
-	slug: string;
+	title: string;
 	log: LogEntry[];
 };
 

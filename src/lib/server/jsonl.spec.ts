@@ -212,28 +212,47 @@ describe('readSessionOverview', () => {
 		expect(overview!.gitBranch).toBe('main');
 	});
 
-	it('returns last non-null slug and permissionMode', async () => {
+	it('returns last non-null permissionMode', async () => {
 		const filePath = writeFixture('summary.jsonl', [
-			userRecord({ slug: null, permissionMode: 'default' }),
+			userRecord({ permissionMode: 'default' }),
 			assistantRecord(),
-			userRecord({ slug: 'my-session', permissionMode: null }),
+			userRecord({ permissionMode: null }),
 			assistantRecord(),
-			userRecord({ slug: 'renamed-session', permissionMode: 'plan' })
+			userRecord({ permissionMode: 'plan' })
 		]);
 
 		const overview = await readSessionOverview(filePath);
-		expect(overview!.slug).toBe('renamed-session');
 		expect(overview!.permissionMode).toBe('plan');
 	});
 
-	it('returns nulls when no slug or permissionMode present', async () => {
+	it('returns null when no permissionMode present', async () => {
 		const filePath = writeFixture('bare.jsonl', [
-			userRecord({ slug: null, permissionMode: null })
+			userRecord({ permissionMode: null })
 		]);
 
 		const overview = await readSessionOverview(filePath);
-		expect(overview!.slug).toBeNull();
 		expect(overview!.permissionMode).toBeNull();
+	});
+
+	it('returns firstUserText from the first non-meta user message', async () => {
+		const filePath = writeFixture('first-text.jsonl', [
+			userRecord({ message: { role: 'user', content: 'fix the login bug' } }),
+			assistantRecord(),
+			userRecord({ message: { role: 'user', content: 'now add tests' } })
+		]);
+
+		const overview = await readSessionOverview(filePath);
+		expect(overview!.firstUserText).toBe('fix the login bug');
+	});
+
+	it('returns null firstUserText when all user messages are meta', async () => {
+		const filePath = writeFixture('meta-only-text.jsonl', [
+			userRecord({ message: { role: 'user', content: '<command-name>/clear</command-name>' } }),
+			assistantRecord()
+		]);
+
+		const overview = await readSessionOverview(filePath);
+		expect(overview!.firstUserText).toBeNull();
 	});
 
 	it('skips permissionMode on records that lack it', async () => {
@@ -368,6 +387,37 @@ describe('getUserText', () => {
 	it('returns empty string for whitespace-only content', () => {
 		const record = JSON.parse(userRecord({ message: { role: 'user', content: '   ' } }));
 		expect(getUserText(record)).toBe('');
+	});
+
+	it('filters out ide_selection tags from content blocks', () => {
+		const record = JSON.parse(
+			userRecord({
+				message: {
+					role: 'user',
+					content: [
+						{ type: 'text', text: '<ide_selection>some code</ide_selection>' },
+						{ type: 'text', text: 'fix this function' }
+					]
+				}
+			})
+		);
+		expect(getUserText(record)).toBe('fix this function');
+	});
+
+	it('filters out ide_opened_file tags from content blocks', () => {
+		const record = JSON.parse(
+			userRecord({
+				message: {
+					role: 'user',
+					content: [
+						{ type: 'text', text: '<ide_opened_file path="src/foo.ts" />' },
+						{ type: 'text', text: '<ide_selection>selected code</ide_selection>' },
+						{ type: 'text', text: 'refactor this' }
+					]
+				}
+			})
+		);
+		expect(getUserText(record)).toBe('refactor this');
 	});
 });
 

@@ -117,12 +117,13 @@
 	.header {
 		height: 32px;
 		padding: 8px 16px;
+		overflow: hidden;
 
-		background: var(--ctp-mantle);
 		border-bottom: 1px solid var(--ctp-overlay0);
+		background: var(--ctp-mantle);
+		color: var(--ctp-subtext1);
 		font-family: var(--stack-industrial);
 		font-size: 14px;
-		color: var(--ctp-subtext1);
 
 		display: flex;
 		gap: 8px;
