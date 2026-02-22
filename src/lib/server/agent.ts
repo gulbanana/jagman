@@ -54,7 +54,7 @@ export async function getAllRepos(): Promise<Repo[]> {
         for (const repo of agentRepos) {
             const key = repo.path.toLowerCase();
             const existing = repoMap.get(key);
-            const brandedSessions = repo.sessions.map((s): RepoSession => ({ ...s, brand: agent.brand }));
+            const brandedSessions = repo.sessions.map((s): RepoSession => ({ ...s, mode: s.status == 'inactive' ? null : s.mode, brand: agent.brand }));
 
             if (existing) {
                 existing.sessions.push(...brandedSessions);
@@ -93,39 +93,39 @@ export async function getAllRepos(): Promise<Repo[]> {
         }
     }
 
-	const repos = [...repoMap.values()];
+    const repos = [...repoMap.values()];
 
-	// Update the in-memory active-session ordering from the current set of
-	// all sessions across every repo. Sessions that are newly active get
-	// prepended; sessions that dropped to inactive are removed; existing
-	// active sessions keep their position.
-	const allSessions = repos.flatMap((r) => r.sessions);
-	const order = updateActiveOrder(allSessions);
-	const activeIndex = new Map(order.map((id, i) => [id, i]));
+    // Update the in-memory active-session ordering from the current set of
+    // all sessions across every repo. Sessions that are newly active get
+    // prepended; sessions that dropped to inactive are removed; existing
+    // active sessions keep their position.
+    const allSessions = repos.flatMap((r) => r.sessions);
+    const order = updateActiveOrder(allSessions);
+    const activeIndex = new Map(order.map((id, i) => [id, i]));
 
-	// Sort sessions within each repo:
-	//   1. Active sessions first, in their tracked FIFO order
-	//   2. Inactive sessions after, by timestamp descending
-	for (const repo of repos) {
-		repo.sessions.sort((a, b) => {
-			const aActive = activeIndex.has(a.id);
-			const bActive = activeIndex.has(b.id);
+    // Sort sessions within each repo:
+    //   1. Active sessions first, in their tracked FIFO order
+    //   2. Inactive sessions after, by timestamp descending
+    for (const repo of repos) {
+        repo.sessions.sort((a, b) => {
+            const aActive = activeIndex.has(a.id);
+            const bActive = activeIndex.has(b.id);
 
-			if (aActive && !bActive) return -1;
-			if (!aActive && bActive) return 1;
-			if (aActive && bActive) {
-				return activeIndex.get(a.id)! - activeIndex.get(b.id)!;
-			}
-			return b.timestamp - a.timestamp;
-		});
-	}
+            if (aActive && !bActive) return -1;
+            if (!aActive && bActive) return 1;
+            if (aActive && bActive) {
+                return activeIndex.get(a.id)! - activeIndex.get(b.id)!;
+            }
+            return b.timestamp - a.timestamp;
+        });
+    }
 
-	// Sort repos by most recent session timestamp (newest first)
-	repos.sort((a, b) => {
-		const aTime = a.sessions[0]?.timestamp ?? 0;
-		const bTime = b.sessions[0]?.timestamp ?? 0;
-		return bTime - aTime;
-	});
+    // Sort repos by most recent session timestamp (newest first)
+    repos.sort((a, b) => {
+        const aTime = a.sessions[0]?.timestamp ?? 0;
+        const bTime = b.sessions[0]?.timestamp ?? 0;
+        return bTime - aTime;
+    });
 
     return repos.map((repo) => ({
         path: toDisplayPath(repo.path),

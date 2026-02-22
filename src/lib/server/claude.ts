@@ -31,6 +31,7 @@ interface SessionHeader {
 	mode: SessionMode | null;
 	timestamp: number;
 	gitBranch: string;
+	lastAssistantText: string | null;
 }
 
 export function mapPermissionMode(permissionMode: string | null): SessionMode | null {
@@ -130,7 +131,8 @@ async function readProjectSessions(
 				slug: overview.slug,
 				mode: mapPermissionMode(overview.permissionMode),
 				timestamp: new Date(overview.lastTimestamp).getTime(),
-				gitBranch: overview.gitBranch
+				gitBranch: overview.gitBranch,
+				lastAssistantText: overview.lastAssistantText
 			};
 		})
 	);
@@ -140,12 +142,13 @@ async function readProjectSessions(
 
 	const branch = sessionHeaders[0]?.gitBranch ?? '';
 
-	const sessions: AgentRepoSession[] = sessionHeaders.map((session, index) => ({
+	const sessions: AgentRepoSession[] = sessionHeaders.map((session) => ({
 		id: session.sessionId,
 		status: 'inactive',
 		mode: session.mode,
 		slug: session.slug ?? session.sessionId,
-		timestamp: session.timestamp
+		timestamp: session.timestamp,
+		lastAssistantText: session.lastAssistantText
 	}));
 
 	return { sessions, branch };

@@ -186,12 +186,22 @@ export default class OpenCodeAgent implements Agent {
 		});
 		const messages = result.data ?? [];
 		let mode: SessionMode | null = null;
+		let lastAssistantText: string | null = null;
 		for (let i = messages.length - 1; i >= 0; i--) {
 			if (messages[i].info.role === 'assistant') {
-				mode = mapOcMode(
-					(messages[i].info as OcAssistantMessage).mode
-				);
-				break;
+				if (mode === null) {
+					mode = mapOcMode(
+						(messages[i].info as OcAssistantMessage).mode
+					);
+				}
+				if (lastAssistantText === null) {
+					const textParts = messages[i].parts.filter(
+						(p): p is OcTextPart => p.type === 'text'
+					);
+					const text = textParts.map((p) => p.text).join('\n');
+					if (text) lastAssistantText = text;
+				}
+				if (mode !== null && lastAssistantText !== null) break;
 			}
 		}
 
@@ -200,7 +210,8 @@ export default class OpenCodeAgent implements Agent {
 			slug: session.title || session.id,
 			status: mapOcStatus(statusMap[session.id]),
 			mode,
-			timestamp: session.time.updated
+			timestamp: session.time.updated,
+			lastAssistantText
 		};
 	}
 

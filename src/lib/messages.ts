@@ -22,6 +22,7 @@ export type RepoSession = {
 	status: SessionStatus;
 	mode: SessionMode | null;
 	timestamp: number;
+	lastAssistantText: string | null;
 };
 
 export type UserEntry = { type: 'user'; text: string; timestamp: string };

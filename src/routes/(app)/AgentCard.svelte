@@ -34,7 +34,11 @@
 					height="16" />
 			</picture>
 			<span class="name">{session.slug}</span>
-			<span class="details">{session.id}</span>
+			{#if session.lastAssistantText}
+				<span class="details">{session.lastAssistantText}</span>
+			{:else}
+				<span class="details awaiting">Awaiting prompt.</span>
+			{/if}
 			<time class="timestamp">{formattedTime}</time>
 		</div>
 	</Pane>
@@ -91,6 +95,21 @@
 
 	.details {
 		grid-area: details;
+		font-family: var(--stack-code);
+		font-size: 12px;
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
+		overflow: hidden;
+		max-height: 56px;
+	}
+
+	.details.awaiting {
+		display: flex;
+		align-items: center;
+		font-style: italic;
+		color: var(--ctp-overlay1);
 	}
 
 	.timestamp {

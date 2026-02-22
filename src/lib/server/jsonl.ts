@@ -148,6 +148,7 @@ export type SessionOverview = {
 	permissionMode: string | null;
 	hasContent: boolean;
 	lastTimestamp: string;
+	lastAssistantText: string | null;
 };
 
 /**
@@ -164,6 +165,7 @@ export async function readSessionOverview(filePath: string): Promise<SessionOver
 	let permissionMode: string | null = null;
 	let hasContent = false;
 	let lastTimestamp = '';
+	let lastAssistantText: string | null = null;
 
 	await scanSession(filePath, (record) => {
 		if (record.timestamp > lastTimestamp) {
@@ -184,12 +186,14 @@ export async function readSessionOverview(filePath: string): Promise<SessionOver
 			}
 		} else if (record.type === 'assistant' && !record.isSidechain) {
 			hasContent = true;
+			const text = getAssistantText(record);
+			if (text) lastAssistantText = text;
 		}
 	});
 
 	if (!sessionId) return null;
 
-	return { sessionId, cwd, gitBranch, slug, permissionMode, hasContent, lastTimestamp };
+	return { sessionId, cwd, gitBranch, slug, permissionMode, hasContent, lastTimestamp, lastAssistantText };
 }
 
 /**
