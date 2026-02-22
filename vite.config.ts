@@ -3,7 +3,22 @@ import { playwright } from '@vitest/browser-playwright';
 import { sveltekit } from '@sveltejs/kit/vite';
 
 export default defineConfig({
-	plugins: [sveltekit()],
+	plugins: [
+		sveltekit(),
+		// Keep the native NAPI-RS module external from the SSR bundle.
+		// Without this, Vite inlines the loader and its createRequire(import.meta.url)
+		// resolves the .node file relative to the wrong directory.
+		// See AGENTS.md "Bundler Externalisation" for the full explanation.
+		{
+			name: 'externalize-libgg',
+			enforce: 'pre',
+			resolveId(source) {
+				if (source === 'libgg') {
+					return { id: 'libgg', external: true };
+				}
+			}
+		}
+	],
 	ssr: {
 		external: ['libgg']
 	},

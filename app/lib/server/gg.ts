@@ -1,10 +1,13 @@
 // Native GG bindings — server-only
-// NAPI-RS generates index.js (ESM) and index.d.ts at the project root
+// NAPI-RS generates index.js (ESM) and index.d.ts at the project root.
+// Imported via the 'libgg' wrapper package (native/) so that both Vite and
+// adapter-node externalise it, keeping the NAPI-RS loader's import.meta.url
+// pointing at the package root where the .node file lives.
 import {
 	startGgWeb as nativeStartGgWeb,
 	stopGgWeb as nativeStopGgWeb,
 	stopAllGgWeb as nativeStopAllGgWeb,
-} from '../../../index.js';
+} from 'libgg';
 import { homedir } from 'node:os';
 
 const HOME = homedir();

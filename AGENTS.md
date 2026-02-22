@@ -121,6 +121,7 @@ Rust source lives in `src/`, TypeScript source in `app/`:
 - `build.rs` — calls `napi_build::setup()`
 - `src/lib.rs` — `#[napi]` functions that wrap GG's Rust APIs for Node.js
 - `app/lib/server/gg.ts` — TypeScript re-export of the generated bindings (server-only)
+- `native/` — local wrapper package (`"libgg": "file:native"` in dependencies) that re-exports from `../index.js`. Exists so that both Vite and adapter-node externalise the native module import — see **Bundler Externalisation** below.
 
 #### GG Dependency
 
@@ -138,7 +139,21 @@ The native build must run before Vite (`npm run build` handles this ordering). T
 
 #### Server-Side Only
 
-The native module is externalised from Vite's SSR bundling (`ssr.external` in `vite.config.ts`). It can only be imported in server-side code (`app/lib/server/`), never in client-side components.
+The native module can only be imported in server-side code (`app/lib/server/`), never in client-side components.
+
+#### Bundler Externalisation
+
+The NAPI-RS generated `index.js` loader uses `createRequire(import.meta.url)` to find the `.node` file relative to itself. If any bundler inlines this code into a chunk in a different directory, the relative `require('./libgg.<platform>.node')` breaks. Both Vite (SSR build) and adapter-node (production build) must keep the import external so the loader runs from the package root where the `.node` file lives.
+
+This is achieved via the `native/` wrapper package:
+
+1. `native/` is a local package (`"libgg": "file:native"` in `dependencies`) that re-exports `../index.js`
+2. `app/lib/server/gg.ts` imports from `'libgg'` (a bare specifier matching the dependency)
+3. A Vite plugin (`externalize-libgg` in `vite.config.ts`) marks `'libgg'` as external during the SSR build, preventing Vite from inlining it
+4. adapter-node automatically externalises all `dependencies`, so `'libgg'` stays external in the production output too
+5. At runtime, Node.js resolves `'libgg'` → `native/index.js` → `../index.js` (the NAPI-RS loader at the package root), where `import.meta.url` is correct
+
+When NAPI-RS multi-architecture support is added (platform-specific optional dependency packages like `@gulbanana/jagman-win32-x64-msvc`), the loader's fallback `require('@gulbanana/jagman-<triple>')` will also work from any directory since CJS require walks ancestor `node_modules/` directories. The `native/` wrapper remains compatible with that approach.
 
 ## Design System
 

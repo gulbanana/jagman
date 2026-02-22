@@ -1,0 +1,6 @@
+{
+	"name": "libgg",
+	"type": "module",
+	"main": "index.js",
+	"types": "../index.d.ts"
+}

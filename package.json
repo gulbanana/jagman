@@ -1,6 +1,6 @@
 {
 	"name": "@gulbanana/jagman",
-	"version": "0.0.3",
+	"version": "0.0.5",
 	"author": {
 		"name": "Thomas Castiglione"
 	},
@@ -35,6 +35,7 @@
 	"files": [
 		"build/**",
 		"bin/**",
+		"native/**",
 		"index.js",
 		"index.d.ts",
 		"*.node"
@@ -77,6 +78,7 @@
 		"@catppuccin/palette": "^1.7.1",
 		"@opencode-ai/sdk": "^1.2.10",
 		"feather-icons": "^4.29.2",
+		"libgg": "file:native",
 		"modern-normalize": "^3.0.1"
 	}
 }
