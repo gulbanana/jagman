@@ -2,8 +2,10 @@ import { homedir } from 'node:os';
 import type { AgentBrand } from "../brands";
 import type { Repo, RepoSession, AgentSession } from "../messages";
 import ClaudeAgent from "./claude";
+import OpenCodeAgent from "./opencode";
 
 export type AgentRepoSession = Omit<RepoSession, 'brand'>;
+
 
 export type AgentRepo = {
     path: string;
@@ -17,7 +19,7 @@ export interface Agent {
     loadSession(id: string): Promise<Omit<AgentSession, 'brand'> | null>;
 }
 
-let wellKnownAgents = [new ClaudeAgent()];
+let wellKnownAgents = [new ClaudeAgent(), new OpenCodeAgent()];
 
 export function configuredAgents(): Agent[] {
     return wellKnownAgents;
@@ -33,25 +35,49 @@ function toDisplayPath(path: string): string {
 }
 
 export async function getAllRepos(): Promise<Repo[]> {
-    const agentRepos: { brand: AgentBrand; repo: AgentRepo }[] = [];
+    // Collect branded sessions grouped by repo path (case-insensitive)
+    const repoMap = new Map<string, { path: string; branch: string; sessions: RepoSession[] }>();
 
     for (const agent of wellKnownAgents) {
         for (const repo of await agent.loadRepos()) {
-            agentRepos.push({ brand: agent.brand, repo });
+            const key = repo.path.toLowerCase();
+            const existing = repoMap.get(key);
+            const brandedSessions = repo.sessions.map((s): RepoSession => ({ ...s, brand: agent.brand }));
+
+            if (existing) {
+                existing.sessions.push(...brandedSessions);
+                // Keep the most informative branch name
+                if (!existing.branch || existing.branch === 'HEAD') {
+                    existing.branch = repo.branch;
+                }
+            } else {
+                repoMap.set(key, {
+                    path: repo.path,
+                    branch: repo.branch,
+                    sessions: brandedSessions
+                });
+            }
         }
     }
 
+    const repos = [...repoMap.values()];
+
+    // Sort sessions within each repo newest-first
+    for (const repo of repos) {
+        repo.sessions.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+    }
+
     // Sort repos by most recent session timestamp (newest first)
-    agentRepos.sort((a, b) => {
-        const aTime = a.repo.sessions[0]?.timestamp ?? '';
-        const bTime = b.repo.sessions[0]?.timestamp ?? '';
+    repos.sort((a, b) => {
+        const aTime = a.sessions[0]?.timestamp ?? '';
+        const bTime = b.sessions[0]?.timestamp ?? '';
         return bTime.localeCompare(aTime);
     });
 
-    return agentRepos.map(({ brand, repo }) => ({
+    return repos.map((repo) => ({
         path: toDisplayPath(repo.path),
         branch: repo.branch,
-        sessions: repo.sessions.map((s): RepoSession => ({ ...s, brand })),
+        sessions: repo.sessions
     }));
 }
 
