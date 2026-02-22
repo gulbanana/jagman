@@ -12,6 +12,8 @@
 		selected?: boolean;
 		onclick: () => void;
 	} = $props();
+
+	let formattedTime = $derived(new Date(session.timestamp).toLocaleString());
 </script>
 
 <button class="card" class:selected {onclick}>
@@ -21,7 +23,7 @@
 		mode={session.mode}
 		animated={session.status === "running"}>
 		<div class="layout">
-			<picture>
+			<picture class="brand">
 				<source
 					srcset={brandIcons[session.brand].dark}
 					media="(prefers-color-scheme: dark)" />
@@ -31,10 +33,9 @@
 					width="16"
 					height="16" />
 			</picture>
-			<span class="info">
-				<span class="agent-name">{session.slug}</span>
-				<span class="slug">{session.slug}</span>
-			</span>
+			<span class="name">{session.slug}</span>
+			<span class="details">{session.id}</span>
+			<time class="timestamp">{formattedTime}</time>
 		</div>
 	</Pane>
 </button>
@@ -64,31 +65,39 @@
 	}
 
 	.layout {
+		height: 100%;
 		display: grid;
 		grid-template-columns: 1fr auto;
-		grid-template-rows: 1fr auto;
+		grid-template-rows: auto 1fr auto;
+		grid-template-areas:
+			"name brand"
+			"details details"
+			"timestamp timestamp";
 		gap: 8px;
 	}
 
-	picture {
-		grid-area: 1/2/2/3;
+	.brand {
+		grid-area: brand;
 	}
 
-	.info {
-		grid-area: 1/1/3/3;
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-	}
-
-	.agent-name {
+	.name {
 		font-family: var(--stack-code);
 		font-size: 13px;
 		font-weight: 600;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
-	.slug {
-		font-size: 12px;
+	.details {
+		grid-area: details;
+	}
+
+	.timestamp {
+		grid-area: timestamp;
+		justify-self: end;
+		font-family: var(--stack-code);
+		font-size: 11px;
 		color: var(--ctp-subtext0);
 	}
 </style>

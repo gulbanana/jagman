@@ -112,7 +112,7 @@ export function closeOpenCodeServers(): void {
 }
 
 function mapOcStatus(status: OcSessionStatus | undefined): SessionStatus {
-	if (!status) return 'completed';
+	if (!status) return 'inactive';
 	switch (status.type) {
 		case 'busy':
 			return 'running';
@@ -120,7 +120,7 @@ function mapOcStatus(status: OcSessionStatus | undefined): SessionStatus {
 			return 'waiting';
 		case 'idle':
 		default:
-			return 'completed';
+			return 'inactive';
 	}
 }
 
@@ -158,8 +158,6 @@ export default class OpenCodeAgent implements Agent {
 			)
 		);
 
-		sessions.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
-
 		return {
 			path: repoPath,
 			branch: vcsInfo.branch || 'HEAD',
@@ -194,7 +192,7 @@ export default class OpenCodeAgent implements Agent {
 			slug: session.title || session.id,
 			status: mapOcStatus(statusMap[session.id]),
 			mode,
-			timestamp: toTimestamp(session.time.updated)
+			timestamp: session.time.updated * 1000
 		};
 	}
 

@@ -1,6 +1,6 @@
 import type { AgentBrand } from "./brands";
 
-export type SessionStatus = "running" | "waiting" | "completed";
+export type SessionStatus = "running" | "waiting" | "inactive";
 export type SessionMode = "standard" | "plan" | "yolo";
 
 export type RepoError = {
@@ -21,7 +21,7 @@ export type RepoSession = {
 	slug: string;
 	status: SessionStatus;
 	mode: SessionMode | null;
-	timestamp: string;
+	timestamp: number;
 };
 
 export type UserEntry = { type: 'user'; text: string; timestamp: string };

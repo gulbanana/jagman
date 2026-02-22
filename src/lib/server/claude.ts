@@ -6,7 +6,7 @@ import type { AgentBrand } from '../brands';
 import type { AgentSession, LogEntry } from '../messages';
 import {
 	readFirstUserRecord,
-	readSessionSummary,
+	readSessionOverview,
 	readAllRecords,
 	getUserText,
 	getAssistantText,
@@ -22,11 +22,14 @@ const PROJECTS_DIR = join(homedir(), '.claude', 'projects');
 /** Cached index of workspace cwd → project directory name */
 let projectIndex: Map<string, string> | null = null;
 
+/** Cached index of session ID → JSONL file path, populated by readProjectSessions */
+const sessionFileCache = new Map<string, string>();
+
 interface SessionHeader {
 	sessionId: string;
 	slug: string | null;
 	mode: SessionMode | null;
-	timestamp: string;
+	timestamp: number;
 	gitBranch: string;
 }
 
@@ -116,33 +119,31 @@ async function readProjectSessions(
 	const headers = await Promise.all(
 		jsonlFiles.map(async (file): Promise<SessionHeader | null> => {
 			const filePath = join(projectPath, file);
-			const first = await readFirstUserRecord(filePath);
-			if (!first) return null;
-			const summary = await readSessionSummary(filePath);
-			if (!summary.hasContent) return null;
+			const overview = await readSessionOverview(filePath);
+			if (!overview || !overview.hasContent) return null;
+
+			// Cache the session ID → file path mapping for fast lookups later
+			sessionFileCache.set(overview.sessionId, filePath);
+
 			return {
-				sessionId: first.sessionId,
-				slug: summary.slug,
-				mode: mapPermissionMode(summary.permissionMode),
-				timestamp: first.timestamp,
-				gitBranch: first.gitBranch
+				sessionId: overview.sessionId,
+				slug: overview.slug,
+				mode: mapPermissionMode(overview.permissionMode),
+				timestamp: new Date(overview.lastTimestamp).getTime(),
+				gitBranch: overview.gitBranch
 			};
 		})
 	);
 
 	const sessionHeaders = headers
-		.filter((h): h is SessionHeader => h !== null)
-		.sort(
-			(a, b) =>
-				new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-		);
+		.filter((h): h is SessionHeader => h !== null);
 
 	const branch = sessionHeaders[0]?.gitBranch ?? '';
 
 	const sessions: AgentRepoSession[] = sessionHeaders.map((session, index) => ({
 		id: session.sessionId,
 		// TEMPORARY: fake active statuses for UI testing
-		status: index === 0 ? 'running' : index === 1 ? 'waiting' : 'completed',
+		status: index === 0 ? 'running' : index === 1 ? 'waiting' : 'inactive',
 		mode: session.mode,
 		slug: session.slug ?? session.sessionId,
 		timestamp: session.timestamp
@@ -153,10 +154,17 @@ async function readProjectSessions(
 
 /**
  * Find the JSONL file for a session by its sessionId.
- * Returns the file path if found, null otherwise.
+ * Checks the in-memory cache first (populated by readProjectSessions),
+ * then falls back to a filename-based scan (Claude Code names files `<sessionId>.jsonl`).
  */
 async function findSessionFile(sessionId: string): Promise<string | null> {
+	// Fast path: check cache (populated during loadRepos → readProjectSessions)
+	const cached = sessionFileCache.get(sessionId);
+	if (cached) return cached;
+
+	// Slow path: scan project directories by filename
 	const index = await getProjectIndex();
+	const targetFilename = `${sessionId}.jsonl`;
 
 	for (const [, projectDirName] of index) {
 		const projectPath = join(PROJECTS_DIR, projectDirName);
@@ -168,12 +176,10 @@ async function findSessionFile(sessionId: string): Promise<string | null> {
 			continue;
 		}
 
-		for (const file of entries.filter((e) => e.endsWith('.jsonl'))) {
-			const filePath = join(projectPath, file);
-			const record = await readFirstUserRecord(filePath);
-			if (record && record.sessionId === sessionId) {
-				return filePath;
-			}
+		if (entries.includes(targetFilename)) {
+			const filePath = join(projectPath, targetFilename);
+			sessionFileCache.set(sessionId, filePath);
+			return filePath;
 		}
 	}
 

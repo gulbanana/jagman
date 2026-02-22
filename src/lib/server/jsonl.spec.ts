@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import {
 	scanSession,
 	readFirstUserRecord,
-	readSessionSummary,
+	readSessionOverview,
 	readAllRecords,
 	getUserText,
 	getAssistantText,
@@ -198,7 +198,20 @@ describe('readFirstUserRecord', () => {
 	});
 });
 
-describe('readSessionSummary', () => {
+describe('readSessionOverview', () => {
+	it('returns identity fields from first user record', async () => {
+		const filePath = writeFixture('identity.jsonl', [
+			userRecord({ sessionId: 'sess-A', cwd: 'C:\\project', gitBranch: 'main' }),
+			assistantRecord()
+		]);
+
+		const overview = await readSessionOverview(filePath);
+		expect(overview).not.toBeNull();
+		expect(overview!.sessionId).toBe('sess-A');
+		expect(overview!.cwd).toBe('C:\\project');
+		expect(overview!.gitBranch).toBe('main');
+	});
+
 	it('returns last non-null slug and permissionMode', async () => {
 		const filePath = writeFixture('summary.jsonl', [
 			userRecord({ slug: null, permissionMode: 'default' }),
@@ -208,9 +221,9 @@ describe('readSessionSummary', () => {
 			userRecord({ slug: 'renamed-session', permissionMode: 'plan' })
 		]);
 
-		const summary = await readSessionSummary(filePath);
-		expect(summary.slug).toBe('renamed-session');
-		expect(summary.permissionMode).toBe('plan');
+		const overview = await readSessionOverview(filePath);
+		expect(overview!.slug).toBe('renamed-session');
+		expect(overview!.permissionMode).toBe('plan');
 	});
 
 	it('returns nulls when no slug or permissionMode present', async () => {
@@ -218,9 +231,9 @@ describe('readSessionSummary', () => {
 			userRecord({ slug: null, permissionMode: null })
 		]);
 
-		const summary = await readSessionSummary(filePath);
-		expect(summary.slug).toBeNull();
-		expect(summary.permissionMode).toBeNull();
+		const overview = await readSessionOverview(filePath);
+		expect(overview!.slug).toBeNull();
+		expect(overview!.permissionMode).toBeNull();
 	});
 
 	it('skips permissionMode on records that lack it', async () => {
@@ -232,8 +245,8 @@ describe('readSessionSummary', () => {
 			assistantRecord()
 		]);
 
-		const summary = await readSessionSummary(filePath);
-		expect(summary.permissionMode).toBe('bypassPermissions');
+		const overview = await readSessionOverview(filePath);
+		expect(overview!.permissionMode).toBe('bypassPermissions');
 	});
 
 	it('reports hasContent false for meta-only sessions', async () => {
@@ -245,8 +258,8 @@ describe('readSessionSummary', () => {
 			fileHistorySnapshot()
 		]);
 
-		const summary = await readSessionSummary(filePath);
-		expect(summary.hasContent).toBe(false);
+		const overview = await readSessionOverview(filePath);
+		expect(overview!.hasContent).toBe(false);
 	});
 
 	it('reports hasContent true when assistant records exist', async () => {
@@ -255,8 +268,8 @@ describe('readSessionSummary', () => {
 			assistantRecord()
 		]);
 
-		const summary = await readSessionSummary(filePath);
-		expect(summary.hasContent).toBe(true);
+		const overview = await readSessionOverview(filePath);
+		expect(overview!.hasContent).toBe(true);
 	});
 
 	it('reports hasContent true for non-meta user messages even without assistant', async () => {
@@ -264,8 +277,30 @@ describe('readSessionSummary', () => {
 			userRecord({ message: { role: 'user', content: 'fix the bug' } })
 		]);
 
-		const summary = await readSessionSummary(filePath);
-		expect(summary.hasContent).toBe(true);
+		const overview = await readSessionOverview(filePath);
+		expect(overview!.hasContent).toBe(true);
+	});
+
+	it('returns null when no user records exist', async () => {
+		const filePath = writeFixture('no-users.jsonl', [
+			assistantRecord(),
+			fileHistorySnapshot()
+		]);
+
+		const overview = await readSessionOverview(filePath);
+		expect(overview).toBeNull();
+	});
+
+	it('uses the last record timestamp, not the first', async () => {
+		const filePath = writeFixture('timestamps.jsonl', [
+			userRecord({ timestamp: '2026-01-01T00:00:00.000Z' }),
+			assistantRecord({ timestamp: '2026-01-01T00:05:00.000Z' }),
+			userRecord({ timestamp: '2026-01-01T00:10:00.000Z' }),
+			assistantRecord({ timestamp: '2026-01-01T00:15:00.000Z' })
+		]);
+
+		const overview = await readSessionOverview(filePath);
+		expect(overview!.lastTimestamp).toBe('2026-01-01T00:15:00.000Z');
 	});
 });
 

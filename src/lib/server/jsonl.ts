@@ -140,23 +140,42 @@ export async function readFirstUserRecord(filePath: string): Promise<UserRecord 
 	return result;
 }
 
-export type SessionSummary = {
+export type SessionOverview = {
+	sessionId: string;
+	cwd: string;
+	gitBranch: string;
 	slug: string | null;
 	permissionMode: string | null;
 	hasContent: boolean;
+	lastTimestamp: string;
 };
 
 /**
- * Scan all records in a session file and return the last non-null
- * slug and permissionMode seen, plus whether the session has any
- * displayable content (non-meta user messages or assistant responses).
+ * Single-pass scan of a session file that extracts everything needed to
+ * list the session: identity fields from the first user record, the
+ * last-seen slug and permissionMode, whether displayable content exists,
+ * and the timestamp of the last record (for sorting).
  */
-export async function readSessionSummary(filePath: string): Promise<SessionSummary> {
+export async function readSessionOverview(filePath: string): Promise<SessionOverview | null> {
+	let sessionId: string | null = null;
+	let cwd = '';
+	let gitBranch = '';
 	let slug: string | null = null;
 	let permissionMode: string | null = null;
 	let hasContent = false;
+	let lastTimestamp = '';
+
 	await scanSession(filePath, (record) => {
+		if (record.timestamp > lastTimestamp) {
+			lastTimestamp = record.timestamp;
+		}
+
 		if (record.type === 'user') {
+			if (sessionId === null) {
+				sessionId = record.sessionId;
+				cwd = record.cwd;
+				gitBranch = record.gitBranch;
+			}
 			if (record.slug !== null) slug = record.slug;
 			if (record.permissionMode !== null) permissionMode = record.permissionMode;
 			if (!hasContent && !record.isSidechain) {
@@ -167,7 +186,10 @@ export async function readSessionSummary(filePath: string): Promise<SessionSumma
 			hasContent = true;
 		}
 	});
-	return { slug, permissionMode, hasContent };
+
+	if (!sessionId) return null;
+
+	return { sessionId, cwd, gitBranch, slug, permissionMode, hasContent, lastTimestamp };
 }
 
 /**

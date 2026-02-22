@@ -58,6 +58,14 @@
         selection = { kind: "repo", path };
     }
 
+    let iframeLoading = $state(false);
+
+    $effect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+        detailSrc;
+        iframeLoading = true;
+    });
+
     $effect(() => {
         if (selection === null && repos.length > 0) {
             selection = { kind: "repo", path: repos[0].path };
@@ -208,7 +216,15 @@
                     {/if}
                     <span class="detail-label">{detailLabel}</span>
                 {/snippet}
-                <iframe src={detailSrc} title="Detail pane"></iframe>
+                <div class="iframe-container">
+                    <iframe
+                        src={detailSrc}
+                        title="Detail pane"
+                        onload={() => (iframeLoading = false)}></iframe>
+                    {#if iframeLoading}
+                        <div class="iframe-overlay">Loading...</div>
+                    {/if}
+                </div>
             </Pane>
         </div>
     </div>
@@ -269,10 +285,27 @@
         flex: 1;
     }
 
+    .iframe-container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+    }
+
     .detail iframe {
         width: 100%;
         height: 100%;
         border: none;
+    }
+
+    .iframe-overlay {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--ctp-crust);
+        color: var(--ctp-subtext0);
+        font-family: var(--stack-ui);
     }
 
     .detail-label {

@@ -23,7 +23,7 @@
 				<span>{detail.repo.sessions.length} agent sessions</span>
 				<span
 					>{detail.repo.sessions.filter(
-						(a) => a.status !== "completed",
+						(a) => a.status !== "inactive",
 					).length} active</span>
 			</div>
 			<div class="section-label">Recent changes</div>

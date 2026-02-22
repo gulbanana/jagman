@@ -12,7 +12,7 @@
 	} = $props();
 
 	const hasActiveAgents = $derived(
-		repo.sessions.some((a) => a.status !== "completed"),
+		repo.sessions.some((a) => a.status !== "inactive"),
 	);
 </script>
 
@@ -23,7 +23,7 @@
 				>{repo.path}</span>
 		{/snippet}
 		<div class="repo-info">
-			<span>{repo.sessions.length} agents</span>
+			<span>{repo.sessions.length} sessions</span>
 			<span>{repo.branch}</span>
 		</div>
 		{#if repo.errors.length > 0}

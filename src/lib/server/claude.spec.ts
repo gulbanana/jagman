@@ -3,7 +3,7 @@ import { writeFileSync, mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { mapPermissionMode } from './claude';
-import { readSessionSummary } from './jsonl';
+import { readSessionOverview } from './jsonl';
 
 // -- Fixture helpers (same minimal records as jsonl.spec.ts) --
 
@@ -124,8 +124,8 @@ describe('session content detection', () => {
 			fileHistorySnapshot()
 		]);
 
-		const summary = await readSessionSummary(filePath);
-		expect(summary.hasContent).toBe(false);
+		const overview = await readSessionOverview(filePath);
+		expect(overview!.hasContent).toBe(false);
 	});
 
 	it('session with real conversation is detected as having content', async () => {
@@ -134,8 +134,8 @@ describe('session content detection', () => {
 			assistantRecord()
 		]);
 
-		const summary = await readSessionSummary(filePath);
-		expect(summary.hasContent).toBe(true);
+		const overview = await readSessionOverview(filePath);
+		expect(overview!.hasContent).toBe(true);
 	});
 
 	it('session with only file-history-snapshot records has no content', async () => {
@@ -144,7 +144,7 @@ describe('session content detection', () => {
 			fileHistorySnapshot()
 		]);
 
-		const summary = await readSessionSummary(filePath);
-		expect(summary.hasContent).toBe(false);
+		const overview = await readSessionOverview(filePath);
+		expect(overview).toBeNull();
 	});
 });

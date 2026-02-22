@@ -77,7 +77,7 @@
 		{/snippet}
 	</svelte:boundary>
 {:else}
-	<div class="status"><ErrorSpan>Session not found.</ErrorSpan></div>
+	<div class="status">Loading...</div>
 {/if}
 
 <style>
