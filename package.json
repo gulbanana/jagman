@@ -26,16 +26,27 @@
 	"bin": {
 		"jagman": "bin/jagman.js"
 	},
+	"napi": {
+		"binaryName": "libgg",
+		"targets": [
+			"x86_64-pc-windows-msvc"
+		]
+	},
 	"files": [
 		"build/**",
-		"bin/**"
+		"bin/**",
+		"index.js",
+		"index.d.ts",
+		"*.node"
 	],
 	"engines": {
 		"node": ">=22.0.0"
 	},
 	"scripts": {
+		"build:native": "napi build --release --platform --esm",
+		"build:native:debug": "napi build --platform --esm",
 		"dev": "vite dev",
-		"build": "vite build",
+		"build": "npm run build:native && vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
@@ -46,6 +57,7 @@
 		"prepublishOnly": "npm run build"
 	},
 	"devDependencies": {
+		"@napi-rs/cli": "^3.0.0",
 		"@playwright/test": "^1.58.1",
 		"@sveltejs/adapter-node": "^5.5.3",
 		"@sveltejs/kit": "^2.50.2",

@@ -1,0 +1,21 @@
+[package]
+name = "libgg"
+version = "0.0.1"
+edition = "2024"
+license = "AGPL-3.0-or-later"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+path = "src/lib.rs"
+
+[dependencies]
+napi = { version = "3", default-features = false, features = ["napi6", "serde-json"] }
+napi-derive = "3"
+gg-cli = { path = "../gg" }
+
+[build-dependencies]
+napi-build = "2"
+
+[profile.dev]
+debug = 0

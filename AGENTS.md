@@ -29,7 +29,7 @@ Each agent runs in its own **Jujutsu workspace** — a separate directory with i
 - Agent work is tracked as ordinary jj commits, visible in the repo's history
 - No branch management is needed — jj's branchless workflow handles isolation naturally
 
-The dashboard's detail pane will embed [**GG**](https://github.com/gulbanana/gg) for repo and revision views. GG is a sister project to JAGMAN which runs as a local web server (`gg web`), and some of its views will be displayed in iframes within the JAGMAN dashboard.
+JAGMAN embeds [**GG**](https://github.com/gulbanana/gg) as a native library for Jujutsu operations. GG is a sister project (source at `../gg`) that provides both a desktop GUI and a web server for JJ repositories. JAGMAN uses GG's worker, config, and message types via a Rust NAPI-RS addon. The dashboard's detail pane will also display some of GG's views in iframes.
 
 ### Persistence
 
@@ -41,6 +41,7 @@ Session history, agent configuration, and other state are stored in a local **SQ
 
 - **SvelteKit** (Svelte 5) — serves both the UI and the server-side API in a single process
 - **TypeScript** throughout
+- **Rust** via NAPI-RS — native addon embedding GG for Jujutsu operations
 - **SQLite** for persistence
 - **Agent SDKs** (Claude Agent SDK, Opencode SDK) for agent control
 
@@ -107,6 +108,37 @@ To start a new agent session, the user clicks in the agent list (on a repo or a 
 - **`RepoColumn`** — a vertical scrolling container using the lookless scrolling pattern.
 - **`AgentCard`** — a button wrapping a headerless Pane with mode-coloured border.
 - **Detail pane** — the right-hand panel contains a `Pane` with a client-side header and an iframe. The iframe loads routes under `/detail/` (agent output, repo views via GG). Detail routes use the root layout (theme only, no sidebars) and render with a `--ctp-crust` background to match the Pane content area.
+
+### Native Addon (`libgg`)
+
+JAGMAN includes a Rust NAPI-RS crate that embeds the GG project as a native Node.js addon. This gives server-side TypeScript direct access to GG's Jujutsu integration — config loading, workspace queries, mutations, and the worker session — without spawning subprocesses or making HTTP calls.
+
+#### Project Layout
+
+Rust source lives in `src/`, TypeScript source in `app/`:
+
+- `Cargo.toml` — defines the `libgg` crate (`cdylib`) with a path dependency on `gg-cli` (`../gg`)
+- `build.rs` — calls `napi_build::setup()`
+- `src/lib.rs` — `#[napi]` functions that wrap GG's Rust APIs for Node.js
+- `app/lib/server/gg.ts` — TypeScript re-export of the generated bindings (server-only)
+
+#### GG Dependency
+
+The `gg-cli` crate (source at `../gg`) is currently referenced by path with default features, which include Tauri. GG's `tauri::generate_context!()` macro embeds pre-built frontend assets at compile time. When using the path dependency, these assets must exist in `../gg/dist/` — if missing, run `npm run build` in the GG directory. Once `gg-cli` is consumed from crates.io instead, the published crate includes the assets and no local build step is needed. GG's source may need to be consulted when extending the NAPI bridge or debugging build issues.
+
+#### Build Process
+
+`napi build --platform --esm` compiles Rust and generates three files at the project root:
+
+- `libgg.<platform>.node` — the compiled native addon
+- `index.js` — ESM loader that picks the right `.node` file for the current platform
+- `index.d.ts` — auto-generated TypeScript type definitions from `#[napi]` annotations
+
+The native build must run before Vite (`npm run build` handles this ordering). The generated files are in `.gitignore` — they are build artifacts, not source.
+
+#### Server-Side Only
+
+The native module is externalised from Vite's SSR bundling (`ssr.external` in `vite.config.ts`). It can only be imported in server-side code (`app/lib/server/`), never in client-side components.
 
 ## Design System
 
