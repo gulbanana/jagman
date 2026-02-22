@@ -27,7 +27,7 @@
 
     const detailSrc = $derived.by(() => {
         const s = selection;
-        if (!s) return `/detail/agent/none`;
+        if (!s) return `/detail/empty`;
         return s.kind === "agent"
             ? `/detail/agent/${s.id}`
             : `/detail/repo/${s.path}`;
@@ -57,6 +57,12 @@
     function selectRepo(path: string) {
         selection = { kind: "repo", path };
     }
+
+    $effect(() => {
+        if (selection === null && repos.length > 0) {
+            selection = { kind: "repo", path: repos[0].path };
+        }
+    });
 </script>
 
 <div class="layout">
