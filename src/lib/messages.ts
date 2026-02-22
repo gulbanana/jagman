@@ -1,8 +1,5 @@
 import type { AgentBrand } from "./brands";
 
-export type SessionStatus = "running" | "waiting" | "inactive";
-export type SessionMode = "standard" | "plan" | "yolo";
-
 export type RepoError = {
 	brand: AgentBrand;
 	message: string;
@@ -18,12 +15,17 @@ export type Repo = {
 export type RepoSession = {
 	brand: AgentBrand,
 	id: string;
+	workspace: string;
 	title: string;
 	status: SessionStatus;
 	mode: SessionMode | null;
 	timestamp: number;
 	lastAssistantText: string | null;
 };
+
+export type SessionStatus = "running" | "waiting" | "inactive" | "external";
+
+export type SessionMode = "standard" | "plan" | "yolo";
 
 export type UserEntry = { type: 'user'; text: string; timestamp: string };
 export type AssistantEntry = { type: 'assistant'; text: string; timestamp: string };

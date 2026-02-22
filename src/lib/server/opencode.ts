@@ -10,6 +10,7 @@ import type {
 import type { Agent, AgentRepo, AgentRepoSession } from './agent';
 import type { AgentBrand } from '../brands';
 import type { AgentSession, LogEntry, SessionMode, SessionStatus } from '../messages';
+import { getAgentProcesses, getWorkspacesWithAgent, markExternalSessions } from './processes';
 
 /**
  * Server lifecycle management.
@@ -142,7 +143,17 @@ export default class OpenCodeAgent implements Agent {
 	brand: AgentBrand = 'oc';
 
 	async loadRepos(repoPaths: string[]): Promise<AgentRepo[]> {
-		return Promise.all(repoPaths.map((path) => this.loadRepo(path)));
+		const repos = await Promise.all(repoPaths.map((path) => this.loadRepo(path)));
+
+		const processes = await getAgentProcesses();
+		const activeWorkspaces = getWorkspacesWithAgent(
+			processes,
+			'opencode',
+			/\bopencode(?:\.exe)?\s+(?:serve|x|run)\b/
+		);
+		markExternalSessions(repos.flatMap((r) => r.sessions), activeWorkspaces);
+
+		return repos;
 	}
 
 	private async loadRepo(repoPath: string): Promise<AgentRepo> {
@@ -207,6 +218,7 @@ export default class OpenCodeAgent implements Agent {
 
 		return {
 			id: session.id,
+			workspace: repoPath,
 			title: session.title || session.id,
 			status: mapOcStatus(statusMap[session.id]),
 			mode,

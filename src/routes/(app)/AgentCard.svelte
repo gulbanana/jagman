@@ -21,7 +21,7 @@
 		stackedAbove
 		stackedBelow
 		mode={session.mode}
-		animated={session.status === "running"}>
+		animated={session.status === "running" || session.status === "external"}>
 		<div class="layout">
 			<picture class="brand">
 				<source

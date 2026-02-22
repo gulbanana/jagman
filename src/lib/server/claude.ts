@@ -15,6 +15,7 @@ import {
 	isMetaMessage,
 	type UserRecord
 } from './jsonl';
+import { getAgentProcesses, getWorkspacesWithAgent, markExternalSessions } from './processes';
 import type { SessionMode } from '../messages';
 
 const PROJECTS_DIR = join(homedir(), '.claude', 'projects');
@@ -110,7 +111,8 @@ async function getProjectIndex(): Promise<Map<string, string>> {
  * sorted newest-first by timestamp.
  */
 async function readProjectSessions(
-	projectDirName: string
+	projectDirName: string,
+	workspace: string
 ): Promise<{ sessions: AgentRepoSession[]; branch: string }> {
 	const projectPath = join(PROJECTS_DIR, projectDirName);
 
@@ -150,7 +152,8 @@ async function readProjectSessions(
 
 	const sessions: AgentRepoSession[] = sessionHeaders.map((session) => ({
 		id: session.sessionId,
-		status: 'inactive',
+		workspace,
+		status: 'inactive' as const,
 		mode: session.mode,
 		title: session.title,
 		timestamp: session.timestamp,
@@ -207,7 +210,7 @@ export default class ClaudeAgent implements Agent {
 					return { path: repoPath, branch: 'HEAD', sessions: [] };
 				}
 
-				const { sessions, branch } = await readProjectSessions(projectDirName);
+				const { sessions, branch } = await readProjectSessions(projectDirName, repoPath);
 				return {
 					path: repoPath,
 					branch: branch || 'HEAD',
@@ -215,6 +218,10 @@ export default class ClaudeAgent implements Agent {
 				};
 			})
 		);
+
+		const processes = await getAgentProcesses();
+		const activeWorkspaces = getWorkspacesWithAgent(processes, 'claude');
+		markExternalSessions(repos.flatMap((r) => r.sessions), activeWorkspaces);
 
 		return repos;
 	}

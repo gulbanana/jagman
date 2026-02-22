@@ -26,7 +26,7 @@ export function updateActiveOrder(
 ): string[] {
 	const currentlyActive = new Set(
 		sessions
-			.filter((s) => s.status === 'running' || s.status === 'waiting')
+			.filter((s) => s.status === 'running' || s.status === 'waiting' || s.status === 'external')
 			.map((s) => s.id)
 	);
 
