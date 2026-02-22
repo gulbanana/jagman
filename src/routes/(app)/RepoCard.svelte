@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ErrorSpan from "$lib/ErrorSpan.svelte";
 	import Pane from "$lib/Pane.svelte";
 	import type { Repo } from "$lib/messages";
 
@@ -18,12 +19,20 @@
 <button class="repo-header" {onclick}>
 	<Pane stackedBelow>
 		{#snippet header()}
-			<span class="repo-name" class:active={hasActiveAgents}>{repo.path}</span>
+			<span class="repo-name" class:active={hasActiveAgents}
+				>{repo.path}</span>
 		{/snippet}
 		<div class="repo-info">
 			<span>{repo.sessions.length} agents</span>
 			<span>{repo.branch}</span>
 		</div>
+		{#if repo.errors.length > 0}
+			<div class="repo-errors">
+				{#each repo.errors as error}
+					<ErrorSpan>[{error.brand}] {error.message}</ErrorSpan>
+				{/each}
+			</div>
+		{/if}
 	</Pane>
 </button>
 
@@ -57,5 +66,11 @@
 		gap: 16px;
 		font-size: 12px;
 		color: var(--ctp-subtext0);
+	}
+
+	.repo-errors {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
 	}
 </style>

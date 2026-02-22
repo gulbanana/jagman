@@ -2,6 +2,7 @@
 	import { page } from "$app/state";
 	import { getAgentDetail } from "./data.remote";
 	import type { ToolUseEntry } from "$lib/messages";
+	import ErrorSpan from "$lib/ErrorSpan.svelte";
 
 	const agentQuery = getAgentDetail(page.params.id ?? "");
 	const agent = $derived(agentQuery.current);
@@ -33,38 +34,54 @@
 </script>
 
 {#if agentQuery.error}
-	<p class="status">Agent not found.</p>
-{:else if agentQuery.loading}
-	<p class="status">Loading...</p>
-{:else if agent}
-	<div class="log">
-		{#each agent.log as entry, i (i)}
-			{#if entry.type === "user"}
-				<div class="log-line user">{entry.text}</div>
-			{:else if entry.type === "assistant"}
-				<div class="log-line assistant">
-					<span class="dot dot-assistant"></span>
-					<span class="text">{entry.text}</span>
-				</div>
-			{:else if entry.type === "tool_use"}
-				<div class="log-line">
-					<span
-						class="dot"
-						class:dot-success={entry.success}
-						class:dot-failure={!entry.success}></span>
-					<span class="text"
-						>{entry.tool}<span class="tool-use"
-							>({formatToolUse(entry)})</span
-						></span>
-				</div>
-			{/if}
-		{/each}
+	<div class="status">
+		<ErrorSpan
+			>{agentQuery.error.message ??
+				"Failed to load agent session."}</ErrorSpan>
 	</div>
+{:else if agentQuery.loading}
+	<div class="status">Loading...</div>
+{:else if agent}
+	<svelte:boundary>
+		<div class="log">
+			{#each agent.log as entry, i (i)}
+				{#if entry.type === "user"}
+					<div class="log-line user">{entry.text}</div>
+				{:else if entry.type === "assistant"}
+					<div class="log-line assistant">
+						<span class="dot dot-assistant"></span>
+						<span class="text">{entry.text}</span>
+					</div>
+				{:else if entry.type === "tool_use"}
+					<div class="log-line">
+						<span
+							class="dot"
+							class:dot-success={entry.success}
+							class:dot-failure={!entry.success}></span>
+						<span class="text"
+							>{entry.tool}<span class="tool-use"
+								>({formatToolUse(entry)})</span
+							></span>
+					</div>
+				{/if}
+			{/each}
+		</div>
+		{#snippet failed(error)}
+			<div class="status">
+				<ErrorSpan>
+					Render error: {error instanceof Error
+						? error.message
+						: error}
+				</ErrorSpan>
+			</div>
+		{/snippet}
+	</svelte:boundary>
+{:else}
+	<div class="status"><ErrorSpan>Session not found.</ErrorSpan></div>
 {/if}
 
 <style>
 	.status {
-		padding: 32px;
 		color: var(--ctp-subtext0);
 		font-family: var(--stack-ui);
 	}

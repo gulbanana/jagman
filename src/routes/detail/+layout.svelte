@@ -10,5 +10,6 @@
 	.detail-frame {
 		background: var(--ctp-crust);
 		min-height: 100vh;
+		overflow: hidden;
 	}
 </style>

@@ -3,10 +3,16 @@ import type { AgentBrand } from "./brands";
 export type SessionStatus = "running" | "waiting" | "completed";
 export type SessionMode = "standard" | "plan" | "yolo";
 
+export type RepoError = {
+	brand: AgentBrand;
+	message: string;
+};
+
 export type Repo = {
 	path: string;
 	branch: string;
 	sessions: RepoSession[];
+	errors: RepoError[];
 };
 
 export type RepoSession = {

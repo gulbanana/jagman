@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from "$app/state";
+	import ErrorSpan from "$lib/ErrorSpan.svelte";
 	import { getRepoDetail } from "./data.remote";
 
 	const detailQuery = getRepoDetail(page.params.path ?? "");
@@ -7,35 +8,50 @@
 </script>
 
 {#if detailQuery.error}
-	<p class="status">Repository not found.</p>
-{:else if detailQuery.loading}
-	<p class="status">Loading...</p>
-{:else if detail}
-	<div class="content">
-		<div class="repo-meta">
-			<span>Branch: <strong>{detail.repo.branch}</strong></span>
-			<span>{detail.repo.sessions.length} agent sessions</span>
-			<span
-				>{detail.repo.sessions.filter((a) => a.status !== "completed")
-					.length} active</span>
-		</div>
-		<div class="section-label">Recent changes</div>
-		<div class="commits">
-			{#each detail.commits as commit (commit.hash)}
-				<div class="commit">
-					<span class="commit-hash">{commit.hash}</span>
-					<span class="commit-msg">{commit.message}</span>
-					<span class="commit-meta"
-						>{commit.author} &middot; {commit.age}</span>
-				</div>
-			{/each}
-		</div>
+	<div class="status">
+		<ErrorSpan
+			>{detailQuery.error.message ??
+				"Failed to load repository."}</ErrorSpan>
 	</div>
+{:else if detailQuery.loading}
+	<div class="status">Loading...</div>
+{:else if detail}
+	<svelte:boundary>
+		<div class="content">
+			<div class="repo-meta">
+				<span>Branch: <strong>{detail.repo.branch}</strong></span>
+				<span>{detail.repo.sessions.length} agent sessions</span>
+				<span
+					>{detail.repo.sessions.filter(
+						(a) => a.status !== "completed",
+					).length} active</span>
+			</div>
+			<div class="section-label">Recent changes</div>
+			<div class="commits">
+				{#each detail.commits as commit (commit.hash)}
+					<div class="commit">
+						<span class="commit-hash">{commit.hash}</span>
+						<span class="commit-msg">{commit.message}</span>
+						<span class="commit-meta"
+							>{commit.author} &middot; {commit.age}</span>
+					</div>
+				{/each}
+			</div>
+		</div>
+		{#snippet failed(error)}
+			<div class="status">
+				<ErrorSpan>
+					Render error: {error instanceof Error
+						? error.message
+						: error}
+				</ErrorSpan>
+			</div>
+		{/snippet}
+	</svelte:boundary>
 {/if}
 
 <style>
 	.status {
-		padding: 32px;
 		color: var(--ctp-subtext0);
 		font-family: var(--stack-ui);
 	}

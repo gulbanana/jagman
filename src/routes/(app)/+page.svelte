@@ -9,6 +9,7 @@
     import RepoColumn from "./RepoColumn.svelte";
     import RepoCard from "./RepoCard.svelte";
     import AgentCard from "./AgentCard.svelte";
+    import ErrorSpan from "$lib/ErrorSpan.svelte";
 
     type Selection =
         | { kind: "agent"; brand: AgentBrand; id: string }
@@ -45,8 +46,8 @@
         const s = selection;
         if (!s) return null;
         return s.kind === "agent"
-            ? ({ kind: "brand" as const, ...brandIcons[s.brand] })
-            : ({ kind: "feather" as const, name: "git-branch" });
+            ? { kind: "brand" as const, ...brandIcons[s.brand] }
+            : { kind: "feather" as const, name: "git-branch" };
     });
 
     function selectAgent(brand: AgentBrand, id: string) {
@@ -141,26 +142,44 @@
     <div class="bottom">
         <div class="repos" use:overflowing>
             {#if reposQuery.error}
-                <div class="status-message">Failed to load repositories.</div>
+                <div class="status-message">
+                    <ErrorSpan>
+                        Failed to load repositories: {reposQuery.error.message}
+                    </ErrorSpan>
+                </div>
             {:else if reposQuery.loading}
                 <div class="status-message">Loading...</div>
             {:else}
-                {#each repos as repo (repo.path)}
-                    <RepoColumn>
-                        <RepoCard
-                            {repo}
-                            onclick={() => selectRepo(repo.path)} />
+                <svelte:boundary>
+                    {#each repos as repo (repo.path)}
+                        <RepoColumn>
+                            <RepoCard
+                                {repo}
+                                onclick={() => selectRepo(repo.path)} />
 
-                        {#each repo.sessions as session (session.id)}
-                            <AgentCard
-                                {session}
-                                selected={selection?.kind === "agent" &&
-                                    selection.id === session.id}
-                                onclick={() =>
-                                    selectAgent(session.brand, session.id)} />
-                        {/each}
-                    </RepoColumn>
-                {/each}
+                            {#each repo.sessions as session (session.id)}
+                                <AgentCard
+                                    {session}
+                                    selected={selection?.kind === "agent" &&
+                                        selection.id === session.id}
+                                    onclick={() =>
+                                        selectAgent(
+                                            session.brand,
+                                            session.id,
+                                        )} />
+                            {/each}
+                        </RepoColumn>
+                    {/each}
+                    {#snippet failed(error)}
+                        <div class="status-message">
+                            <ErrorSpan>
+                                Render error: {error instanceof Error
+                                    ? error.message
+                                    : error}
+                            </ErrorSpan>
+                        </div>
+                    {/snippet}
+                </svelte:boundary>
             {/if}
         </div>
 
