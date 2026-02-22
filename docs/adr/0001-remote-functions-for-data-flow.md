@@ -25,7 +25,7 @@ This works but creates a separation between data fetching (in `+page.server.ts`)
 
 ### Custom API endpoints + client-side fetch
 
-Define REST-style endpoints in `src/routes/api/`, call them from the client with `fetch`. Maximum flexibility but no type safety across the boundary, no automatic SSR, and significant boilerplate for serialization, error handling, and cache management.
+Define REST-style endpoints in `app/routes/api/`, call them from the client with `fetch`. Maximum flexibility but no type safety across the boundary, no automatic SSR, and significant boilerplate for serialization, error handling, and cache management.
 
 ### Remote functions (query / form / command)
 
@@ -38,9 +38,9 @@ Use SvelteKit remote functions as the primary data flow mechanism.
 - **Reads** use `query()` — returns a reactive object with `.current`, `.loading`, `.error`, and `.refresh()`. SSR'd on first render, re-fetchable on demand.
 - **Form-based mutations** use `form()` — spreads onto a `<form>` element, automatically refreshes all active queries on success.
 - **Imperative mutations** use `command()` — for actions triggered outside a form context, with explicit `.updates()` to refresh specific queries.
-- **Shared types** live in `src/lib/messages.ts` and are imported by both remote modules and components.
+- **Shared types** live in `app/lib/messages.ts` and are imported by both remote modules and components.
 
-Remote function files are colocated with the routes that use them (e.g. `src/routes/data.remote.ts` alongside `src/routes/+page.svelte`).
+Remote function files are colocated with the routes that use them (e.g. `app/routes/data.remote.ts` alongside `app/routes/+page.svelte`).
 
 ## Consequences
 

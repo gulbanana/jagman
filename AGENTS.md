@@ -112,7 +112,7 @@ To start a new agent session, the user clicks in the agent list (on a repo or a 
 
 ### Colors
 
-All colors must come from the Catppuccin palette via `--ctp-*` CSS variables defined in `src/lib/theme.css`. Never use raw hex, rgb, or named colors for visible UI elements. (`transparent`, `black`/`transparent` in CSS masks, and `currentColor` are permitted where semantically appropriate.)
+All colors must come from the Catppuccin palette via `--ctp-*` CSS variables defined in `app/lib/theme.css`. Never use raw hex, rgb, or named colors for visible UI elements. (`transparent`, `black`/`transparent` in CSS masks, and `currentColor` are permitted where semantically appropriate.)
 
 ### Metrics
 
@@ -126,7 +126,7 @@ Font stacks are defined as CSS custom properties (`--stack-*`) in `theme.css`. T
 
 ### Lookless Scrolling
 
-Scrollable regions use a consistent "lookless" pattern: the native scrollbar is hidden, and a CSS `mask-image` gradient fades content to transparent at the scroll edge to hint that more content exists. The fade region is 64px. The fade only appears when the element actually overflows, controlled by the `overflowing` Svelte action (`src/lib/overflowing.ts`) which sets a `data-overflowing` attribute via `ResizeObserver`.
+Scrollable regions use a consistent "lookless" pattern: the native scrollbar is hidden, and a CSS `mask-image` gradient fades content to transparent at the scroll edge to hint that more content exists. The fade region is 64px. The fade only appears when the element actually overflows, controlled by the `overflowing` Svelte action (`app/lib/overflowing.ts`) which sets a `data-overflowing` attribute via `ResizeObserver`.
 
 ```css
 scrollbar-width: none;              /* Firefox */

@@ -50,10 +50,10 @@ The dashboard page derives the iframe `src` from a `Selection` state variable. T
 
 The dashboard has sidebars (provided by the root layout). Detail pages rendered inside an iframe must not get sidebars. SvelteKit's `+layout@.svelte` reset cannot bypass the root layout entirely, so we use layout groups:
 
-- `src/routes/+layout.svelte` — theme and favicon only (shared by all routes)
-- `src/routes/(app)/+layout.svelte` — sidebar chrome (dashboard only)
-- `src/routes/(app)/+page.svelte` — the dashboard
-- `src/routes/detail/...` — detail pages (inherit theme, no sidebars)
+- `app/routes/+layout.svelte` — theme and favicon only (shared by all routes)
+- `app/routes/(app)/+layout.svelte` — sidebar chrome (dashboard only)
+- `app/routes/(app)/+page.svelte` — the dashboard
+- `app/routes/detail/...` — detail pages (inherit theme, no sidebars)
 
 ### Mock data
 

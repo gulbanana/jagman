@@ -9,6 +9,9 @@ const config = {
 		adapter: adapter(),
 		experimental: {
 			remoteFunctions: true
+		},
+		files: {
+			src: 'app'
 		}
 	}
 };

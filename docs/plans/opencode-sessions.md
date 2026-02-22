@@ -10,7 +10,7 @@ ClaudeAgent reads session data from `.jsonl` files on the filesystem. OpenCodeAg
 
 ## Steps
 
-### 1. New file: `src/lib/server/config.ts`
+### 1. New file: `app/lib/server/config.ts`
 
 Extract the hardcoded repo paths from `claude.ts` into a shared config module:
 
@@ -46,7 +46,7 @@ Remove the `REPO_PATHS` constant and accept it as a parameter to `loadRepos()`.
 npm install @opencode-ai/sdk
 ```
 
-### 5. Rewrite `src/lib/server/opencode.ts`
+### 5. Rewrite `app/lib/server/opencode.ts`
 
 **Server lifecycle management:**
 - Maintain a `Map<string, { client, server }>` keyed by repo path
