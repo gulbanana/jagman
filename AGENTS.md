@@ -16,8 +16,9 @@ JAGMAN uses an abstraction layer over agent SDKs. The initial targets are:
 
 - **Claude Code** — via the Claude Agent SDK (TypeScript)
 - **Opencode** — via the Opencode SDK (TypeScript)
+- **GitHub Copilot** — under consideration as a future target
 
-Both have similar capabilities (autonomous coding, tool use, permission gating), making a shared abstraction practical.
+Both Claude Code and Opencode have similar capabilities (autonomous coding, tool use, permission gating), making a shared abstraction practical.
 
 ### Jujutsu Integration
 
@@ -59,7 +60,7 @@ A horizontal strip across the top containing **attention cards** — things that
 
 A horizontally-scrolling row of **repo columns** (using lookless scrolling), one per repository. Each column is a vertical stack (also lookless-scrolling) containing:
 
-1. A **repo header pane** — the repository path, branch name, and agent count. Gets a peach border when any agents are active. Clickable to show repo details in the detail pane.
+1. A **repo header pane** — the repository path, branch name, and agent count. The repo name is coloured peach when any agents are active. Clickable to show repo details in the detail pane.
 2. **Agent cards** — buttons wrapping headerless panes, one per agent session (both active and historical). Each shows information about a running agent or past session.
 
 Agent cards have a coloured border indicating their mode:
@@ -69,23 +70,19 @@ Agent cards have a coloured border indicating their mode:
 - `--ctp-red` — yolo mode (all permissions bypassed)
 - No special colour — completed/inactive sessions
 
-Agent status is shown by a coloured dot:
-
-- `--ctp-green` — running
-- `--ctp-yellow` — waiting (for permission, input, etc.)
-- `--ctp-overlay1` — completed
+Agent status is conveyed by border animation: running agents have an animated rotating spark effect on their mode-coloured border; inactive agents have a static border.
 
 Clicking an agent card shows its details in the detail pane.
 
 #### Detail Pane
 
-The right-hand panel, sized at 1fr of a 3fr+1fr grid (25% of available space). Shows one of three views:
+The right-hand panel, sized via `auto minmax(512px, 1fr)` — the repo columns take their natural width and the detail pane fills the remaining space (minimum 512px). Shows one of:
 
-- **Activity summary** (default) — a timestamped feed of recent events across all agents
+- **Empty placeholder** (default) — prompts the user to open a repository
 - **Agent detail** — the selected agent's streaming log or session history
 - **Repo detail** — the selected repo's branch info and recent jj change log
 
-Has a header showing the current selection and a close button to return to the activity view.
+Has a header showing the current selection (icon and label).
 
 #### Layout Grid
 
@@ -94,7 +91,7 @@ Has a header showing the current selection and a close button to return to the a
 │  Attention bar  [ card ] [ card ] [ card ...►   │
 ├──────────────────────────────┬──────────────────┤
 │  Repo columns (h-scroll)     │  Detail pane     │
-│  [repo1] [repo2] [repo3...►  │  (activity,      │
+│  [repo1] [repo2] [repo3...►  │  (empty,          │
 │                              │   agent, or repo) │
 └──────────────────────────────┴──────────────────┘
 ```
@@ -105,7 +102,7 @@ To start a new agent session, the user clicks in the agent list (on a repo or a 
 
 ### Component Architecture
 
-- **`Pane`** — the core presentational component. A bordered box with an optional header and content area. Supports `stackedAbove`/`stackedBelow` flags to remove rounded corners for vertical stacking, and a `borderColor` prop for mode/status colouring.
+- **`Pane`** — the core presentational component. A bordered box with an optional header and content area. Supports `stackedAbove`/`stackedBelow` flags to remove rounded corners for vertical stacking, and a `mode` prop (`SessionMode | null`) that derives border colour from the agent's mode (peach for standard, blue for plan, red for yolo). When `animated` is set and a mode is active, a rotating conic-gradient border effect (spark) is applied.
 - **`AttentionBar`** / **`AttentionCard`** — the top-level attention strip and its items.
 - **`RepoColumn`** — a vertical scrolling container using the lookless scrolling pattern.
 - **`AgentCard`** — a button wrapping a headerless Pane with mode-coloured border.
@@ -125,11 +122,7 @@ This does not apply to font-size, letter-spacing, line-height, or values derived
 
 ### Font Stacks
 
-Font stacks are defined in `theme.css`, including:
-
-- `--stack-ui` — body text, labels
-- `--stack-industrial` — condensed headings, section labels, category tags
-- `--stack-code` — monospace for code, identifiers, paths, hashes
+Font stacks are defined as CSS custom properties (`--stack-*`) in `theme.css`. Typography is still being refined, but the general approach is to provide purpose-specific stacks (e.g. body text, condensed headings, monospace) that components reference by variable rather than by literal font names.
 
 ### Lookless Scrolling
 
@@ -169,7 +162,7 @@ Use `null` as the explicit marker for "no value" in object properties. Do not us
 This applies to:
 - **Data model types** — fields on domain objects, messages, API responses
 - **Computed values** — derived state or ternary expressions that may produce "no value"
-- **Props that carry domain data** — e.g. a `borderColor` prop derived from a nullable model field
+- **Props that carry domain data** — e.g. a `mode` prop derived from a nullable model field
 
 Standard Svelte optional props (`header?: Snippet`, `stackedAbove?: boolean`) that simply allow callers to omit a prop are fine as `?:`.
 
