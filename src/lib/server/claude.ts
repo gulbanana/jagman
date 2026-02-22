@@ -1,11 +1,19 @@
 import { readdir, stat } from 'node:fs/promises';
-import { createReadStream } from 'node:fs';
-import { createInterface } from 'node:readline';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import type { Agent, AgentRepo, AgentRepoSession } from './agent';
 import type { AgentBrand } from '../brands';
-import type { AgentSession } from '../messages';
+import type { AgentSession, LogEntry } from '../messages';
+import {
+	readFirstUserRecord,
+	readAllRecords,
+	getUserText,
+	getAssistantText,
+	getToolUses,
+	getToolResults,
+	isMetaMessage,
+	type UserRecord
+} from './jsonl';
 
 const REPO_PATHS = [
 	'C:\\Users\\banana\\Documents\\code\\jagman',
@@ -20,37 +28,18 @@ let projectIndex: Map<string, string> | null = null;
 
 interface SessionHeader {
 	sessionId: string;
-	slug: string | undefined;
+	slug: string | null;
 	timestamp: string;
 	gitBranch: string;
 }
 
-/**
- * Read lines from a .jsonl file until finding the first "user"-type message.
- * Returns the parsed fields, or null if not found within 50 lines.
- */
-async function readFirstUserMessage(
-	filePath: string
-): Promise<Record<string, unknown> | null> {
-	const stream = createReadStream(filePath, { encoding: 'utf-8' });
-	const rl = createInterface({ input: stream, crlfDelay: Infinity });
-
-	let lineCount = 0;
-	try {
-		for await (const line of rl) {
-			if (++lineCount > 50) break;
-			try {
-				const obj = JSON.parse(line);
-				if (obj.type === 'user') return obj;
-			} catch {
-				continue;
-			}
-		}
-	} finally {
-		rl.close();
-		stream.destroy();
-	}
-	return null;
+function headerFromRecord(record: UserRecord): SessionHeader {
+	return {
+		sessionId: record.sessionId,
+		slug: record.slug,
+		timestamp: record.timestamp,
+		gitBranch: record.gitBranch
+	};
 }
 
 /**
@@ -87,9 +76,9 @@ async function buildProjectIndex(): Promise<Map<string, string>> {
 			const firstJsonl = entries.find((e) => e.endsWith('.jsonl'));
 			if (!firstJsonl) return;
 
-			const msg = await readFirstUserMessage(join(dirPath, firstJsonl));
-			if (msg && typeof msg.cwd === 'string') {
-				index.set(msg.cwd.toLowerCase(), dirName);
+			const record = await readFirstUserRecord(join(dirPath, firstJsonl));
+			if (record) {
+				index.set(record.cwd.toLowerCase(), dirName);
 			}
 		})
 	);
@@ -105,7 +94,7 @@ async function getProjectIndex(): Promise<Map<string, string>> {
 }
 
 /**
- * Read all sessions for a project directory and return Agent objects
+ * Read all sessions for a project directory and return session metadata
  * sorted newest-first by timestamp.
  */
 async function readProjectSessions(
@@ -124,14 +113,9 @@ async function readProjectSessions(
 
 	const headers = await Promise.all(
 		jsonlFiles.map(async (file): Promise<SessionHeader | null> => {
-			const msg = await readFirstUserMessage(join(projectPath, file));
-			if (!msg) return null;
-			return {
-				sessionId: msg.sessionId as string,
-				slug: msg.slug as string | undefined,
-				timestamp: msg.timestamp as string,
-				gitBranch: (msg.gitBranch as string) || ''
-			};
+			const record = await readFirstUserRecord(join(projectPath, file));
+			if (!record) return null;
+			return headerFromRecord(record);
 		})
 	);
 
@@ -150,10 +134,39 @@ async function readProjectSessions(
 		status: index === 0 ? 'running' : index === 1 ? 'waiting' : 'completed',
 		mode: index < 2 ? 'standard' : null,
 		slug: session.slug ?? session.sessionId,
-		timestamp: session.timestamp,
+		timestamp: session.timestamp
 	}));
 
 	return { sessions, branch };
+}
+
+/**
+ * Find the JSONL file for a session by its sessionId.
+ * Returns the file path if found, null otherwise.
+ */
+async function findSessionFile(sessionId: string): Promise<string | null> {
+	const index = await getProjectIndex();
+
+	for (const [, projectDirName] of index) {
+		const projectPath = join(PROJECTS_DIR, projectDirName);
+
+		let entries: string[];
+		try {
+			entries = await readdir(projectPath);
+		} catch {
+			continue;
+		}
+
+		for (const file of entries.filter((e) => e.endsWith('.jsonl'))) {
+			const filePath = join(projectPath, file);
+			const record = await readFirstUserRecord(filePath);
+			if (record && record.sessionId === sessionId) {
+				return filePath;
+			}
+		}
+	}
+
+	return null;
 }
 
 export default class ClaudeAgent implements Agent {
@@ -182,30 +195,50 @@ export default class ClaudeAgent implements Agent {
 	}
 
 	async loadSession(id: string): Promise<Omit<AgentSession, 'brand'> | null> {
-		const index = await getProjectIndex();
+		const filePath = await findSessionFile(id);
+		if (!filePath) return null;
 
-		for (const [, projectDirName] of index) {
-			const projectPath = join(PROJECTS_DIR, projectDirName);
+		const records = await readAllRecords(filePath);
+		const firstUser = records.find((r): r is UserRecord => r.type === 'user');
 
-			let entries: string[];
-			try {
-				entries = await readdir(projectPath);
-			} catch {
-				continue;
-			}
-
-			for (const file of entries.filter(e => e.endsWith('.jsonl'))) {
-				const msg = await readFirstUserMessage(join(projectPath, file));
-				if (msg && msg.sessionId === id) {
-					return {
-						id,
-						slug: (msg.slug as string) ?? id,
-						log: ["User: Here's my prompt.", "Assistant: I'm putting out some output."], // TODO: read actual session log
-					};
+		// Build a map of tool_use_id → success from tool_result blocks
+		const resultMap = new Map<string, boolean>();
+		for (const record of records) {
+			if (record.type === 'user') {
+				for (const { toolUseId, isError } of getToolResults(record)) {
+					resultMap.set(toolUseId, !isError);
 				}
 			}
 		}
 
-		return null;
+		const log: LogEntry[] = [];
+		for (const record of records) {
+			if (record.type === 'user') {
+				const text = getUserText(record);
+				if (text && !isMetaMessage(record)) {
+					log.push({ type: 'user', text, timestamp: record.timestamp });
+				}
+			} else {
+				const text = getAssistantText(record);
+				if (text) {
+					log.push({ type: 'assistant', text, timestamp: record.timestamp });
+				}
+				for (const { id: toolId, name, input } of getToolUses(record)) {
+					log.push({
+						type: 'tool_use',
+						tool: name,
+						args: new Map(Object.entries(input)),
+						success: resultMap.get(toolId) ?? true,
+						timestamp: record.timestamp
+					});
+				}
+			}
+		}
+
+		return {
+			id,
+			slug: firstUser?.slug ?? id,
+			log
+		};
 	}
 }

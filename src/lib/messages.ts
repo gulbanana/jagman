@@ -18,11 +18,16 @@ export type RepoSession = {
 	timestamp: string;
 };
 
+export type UserEntry = { type: 'user'; text: string; timestamp: string };
+export type AssistantEntry = { type: 'assistant'; text: string; timestamp: string };
+export type ToolUseEntry = { type: 'tool_use'; tool: string; args: Map<string, unknown>; success: boolean; timestamp: string };
+export type LogEntry = UserEntry | AssistantEntry | ToolUseEntry;
+
 export type AgentSession = {
 	brand: AgentBrand,
 	id: string;
 	slug: string;
-	log: string[];
+	log: LogEntry[];
 };
 
 export type Commit = {
