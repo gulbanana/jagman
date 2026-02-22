@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { page } from '$app/state';
-	import { getRepoDetail } from './data.remote';
+	import { page } from "$app/state";
+	import { getRepoDetail } from "./data.remote";
 
-	const detailQuery = getRepoDetail(page.params.path ?? '');
+	const detailQuery = getRepoDetail(page.params.path ?? "");
 	const detail = $derived(detailQuery.current);
 </script>
 
@@ -14,8 +14,10 @@
 	<div class="content">
 		<div class="repo-meta">
 			<span>Branch: <strong>{detail.repo.branch}</strong></span>
-			<span>{detail.repo.agents.length} agent sessions</span>
-			<span>{detail.repo.agents.filter((a) => a.status !== "completed").length} active</span>
+			<span>{detail.repo.sessions.length} agent sessions</span>
+			<span
+				>{detail.repo.sessions.filter((a) => a.status !== "completed")
+					.length} active</span>
 		</div>
 		<div class="section-label">Recent changes</div>
 		<div class="commits">
@@ -23,7 +25,8 @@
 				<div class="commit">
 					<span class="commit-hash">{commit.hash}</span>
 					<span class="commit-msg">{commit.message}</span>
-					<span class="commit-meta">{commit.author} &middot; {commit.age}</span>
+					<span class="commit-meta"
+						>{commit.author} &middot; {commit.age}</span>
 				</div>
 			{/each}
 		</div>

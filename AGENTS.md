@@ -160,6 +160,19 @@ Used by:
 - **Repo row** (`.repos` in `+page.svelte`) — horizontal scroll, fades right
 - **RepoColumn** — vertical scroll, fades bottom
 
+## Code Style
+
+### Null Over Undefined
+
+Use `null` as the explicit marker for "no value" in object properties. Do not use optional properties (`?:`) or `undefined` for this purpose — `undefined` can appear accidentally (e.g. missing keys, failed lookups) and has overloaded semantics in function signatures. Prefer `T | null` with a default of `null`.
+
+This applies to:
+- **Data model types** — fields on domain objects, messages, API responses
+- **Computed values** — derived state or ternary expressions that may produce "no value"
+- **Props that carry domain data** — e.g. a `borderColor` prop derived from a nullable model field
+
+Standard Svelte optional props (`header?: Snippet`, `stackedAbove?: boolean`) that simply allow callers to omit a prop are fine as `?:`.
+
 ## Development Tools
 
 ### Svelte MCP Server

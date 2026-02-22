@@ -1,28 +1,42 @@
 <script lang="ts">
 	import type { Snippet } from "svelte";
+	import type { SessionMode } from "$lib/messages";
 
 	let {
 		header,
 		children,
-		borderColor,
+		mode = null,
+		animated = false,
 		stackedAbove = false,
 		stackedBelow = false,
 	}: {
 		header?: Snippet;
 		children: Snippet;
-		borderColor?: string;
+		mode?: SessionMode | null;
+		animated?: boolean;
 		stackedAbove?: boolean;
 		stackedBelow?: boolean;
 	} = $props();
+
+	const modeColors: Record<SessionMode, { base: string; spark: string }> = {
+		standard: { base: "var(--ctp-peach)", spark: "var(--ctp-yellow)" },
+		plan: { base: "var(--ctp-blue)", spark: "var(--ctp-lavender)" },
+		yolo: { base: "var(--ctp-red)", spark: "var(--ctp-pink)" },
+	};
+
+	const colors = $derived(mode ? modeColors[mode] : null);
 </script>
 
 <div
 	class="pane"
 	class:stacked-above={stackedAbove}
 	class:stacked-below={stackedBelow}
-	style:border-color={borderColor}>
+	class:has-mode={colors !== null}
+	class:animated={animated && colors !== null}
+	style:--mode-base={colors?.base}
+	style:--mode-spark={colors?.spark}>
 	{#if header}
-		<div class="header" style:border-color={borderColor}>
+		<div class="header">
 			{@render header()}
 		</div>
 	{/if}
@@ -32,6 +46,12 @@
 </div>
 
 <style>
+	@property --spark-angle {
+		syntax: "<angle>";
+		initial-value: 0deg;
+		inherits: false;
+	}
+
 	.pane {
 		border: 2px solid var(--ctp-overlay0);
 		border-radius: 8px;
@@ -40,6 +60,31 @@
 		display: grid;
 		grid-template-rows: auto 1fr;
 		grid-template-columns: minmax(0, auto);
+	}
+
+	.pane.has-mode {
+		border-color: var(--mode-base);
+	}
+
+	.pane.animated {
+		border-color: transparent;
+		background:
+			linear-gradient(var(--ctp-crust), var(--ctp-crust)) padding-box,
+			conic-gradient(
+					from var(--spark-angle),
+					var(--mode-base) 0deg,
+					var(--mode-spark) 4deg,
+					var(--mode-base) 64deg,
+					var(--mode-base) 360deg
+				)
+				border-box;
+		animation: spark-rotate 2s linear(0, 0.176 16.67%, 0.324 33.33%, 0.676 66.67%, 0.824 83.33%, 1) infinite;
+	}
+
+	@keyframes spark-rotate {
+		to {
+			--spark-angle: 360deg;
+		}
 	}
 
 	.pane.stacked-above {
@@ -53,13 +98,17 @@
 	}
 
 	.header {
+		height: 32px;
 		padding: 8px 16px;
+
 		background: var(--ctp-mantle);
 		border-bottom: 1px solid var(--ctp-overlay0);
-		border-bottom-color: var(--ctp-overlay0) !important;
 		font-family: var(--stack-industrial);
 		font-size: 14px;
 		color: var(--ctp-subtext1);
+
+		display: flex;
+		gap: 8px;
 	}
 
 	.content {

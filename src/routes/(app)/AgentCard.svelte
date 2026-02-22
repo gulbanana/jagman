@@ -1,44 +1,39 @@
 <script lang="ts">
 	import Pane from "$lib/Pane.svelte";
+	import { brandIcons, brandNames } from "$lib/brands";
+	import type { RepoSession } from "$lib/messages";
 
 	let {
-		name,
-		status,
-		mode,
-		slug,
+		session,
 		selected = false,
-		onclick
+		onclick,
 	}: {
-		name: string;
-		status: "running" | "waiting" | "completed";
-		mode?: "standard" | "plan" | "yolo";
-		slug: string;
+		session: RepoSession;
 		selected?: boolean;
 		onclick: () => void;
 	} = $props();
-
-	const statusColors: Record<string, string> = {
-		running: "var(--ctp-green)",
-		waiting: "var(--ctp-yellow)",
-		completed: "var(--ctp-overlay1)"
-	};
-
-	const modeColors: Record<string, string> = {
-		standard: "var(--ctp-peach)",
-		plan: "var(--ctp-blue)",
-		yolo: "var(--ctp-red)"
-	};
-
-	const borderColor = $derived(mode ? modeColors[mode] : undefined);
 </script>
 
 <button class="card" class:selected {onclick}>
-	<Pane stackedAbove stackedBelow {borderColor}>
-		<div class="body">
-			<span class="dot" style:background={statusColors[status]}></span>
+	<Pane
+		stackedAbove
+		stackedBelow
+		mode={session.mode}
+		animated={session.status === "running"}>
+		<div class="layout">
+			<picture>
+				<source
+					srcset={brandIcons[session.brand].dark}
+					media="(prefers-color-scheme: dark)" />
+				<img
+					src={brandIcons[session.brand].light}
+					alt={brandNames[session.brand]}
+					width="16"
+					height="16" />
+			</picture>
 			<span class="info">
-				<span class="agent-name">{name}</span>
-				<span class="slug">{slug}</span>
+				<span class="agent-name">{session.slug}</span>
+				<span class="slug">{session.slug}</span>
 			</span>
 		</div>
 	</Pane>
@@ -54,6 +49,10 @@
 		cursor: pointer;
 		text-align: left;
 		color: var(--ctp-text);
+
+		& > :global(*) {
+			min-height: 128px;
+		}
 	}
 
 	.card:hover {
@@ -64,21 +63,19 @@
 		filter: brightness(0.9);
 	}
 
-	.body {
-		display: flex;
-		align-items: start;
+	.layout {
+		display: grid;
+		grid-template-columns: 1fr auto;
+		grid-template-rows: 1fr auto;
 		gap: 8px;
 	}
 
-	.dot {
-		width: 8px;
-		height: 8px;
-		border-radius: 4px;
-		flex-shrink: 0;
-		margin-top: 4px;
+	picture {
+		grid-area: 1/2/2/3;
 	}
 
 	.info {
+		grid-area: 1/1/3/3;
 		display: flex;
 		flex-direction: column;
 		gap: 2px;

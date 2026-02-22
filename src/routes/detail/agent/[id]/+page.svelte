@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { page } from '$app/state';
-	import { getAgentDetail } from './data.remote';
+	import { page } from "$app/state";
+	import { getAgentDetail } from "./data.remote";
 
-	const agentQuery = getAgentDetail(page.params.id ?? '');
+	const agentQuery = getAgentDetail(page.params.id ?? "");
 	const agent = $derived(agentQuery.current);
 </script>
 

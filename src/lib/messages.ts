@@ -1,19 +1,28 @@
-export type AgentStatus = "running" | "waiting" | "completed";
-export type AgentMode = "standard" | "plan" | "yolo";
+import type { AgentBrand } from "./brands";
 
-export type Agent = {
-	id: string;
-	name: string;
-	status: AgentStatus;
-	mode?: AgentMode;
-	slug: string;
-	log: string[];
-};
+export type SessionStatus = "running" | "waiting" | "completed";
+export type SessionMode = "standard" | "plan" | "yolo";
 
 export type Repo = {
 	path: string;
 	branch: string;
-	agents: Agent[];
+	sessions: RepoSession[];
+};
+
+export type RepoSession = {
+	brand: AgentBrand,
+	id: string;
+	slug: string;
+	status: SessionStatus;
+	mode: SessionMode | null;
+	timestamp: string;
+};
+
+export type AgentSession = {
+	brand: AgentBrand,
+	id: string;
+	slug: string;
+	log: string[];
 };
 
 export type Commit = {

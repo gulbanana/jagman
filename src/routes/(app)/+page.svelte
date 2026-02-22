@@ -1,15 +1,17 @@
 <script lang="ts">
+    import Icon from "$lib/Icon.svelte";
+    import Pane from "$lib/Pane.svelte";
+    import { overflowing } from "$lib/overflowing";
+    import { getRepos, getAttentionCards } from "./data.remote";
+    import { brandIcons, type AgentBrand } from "$lib/brands";
     import AttentionBar from "./AttentionBar.svelte";
     import AttentionCard from "./AttentionCard.svelte";
     import RepoColumn from "./RepoColumn.svelte";
+    import RepoCard from "./RepoCard.svelte";
     import AgentCard from "./AgentCard.svelte";
-    import Pane from "$lib/Pane.svelte";
-    import { overflowing } from "$lib/overflowing";
-    import type { Repo } from "$lib/messages";
-    import { getRepos, getAttentionCards } from "./data.remote";
 
     type Selection =
-        | { kind: "agent"; id: string }
+        | { kind: "agent"; brand: AgentBrand; id: string }
         | { kind: "repo"; path: string };
 
     const reposQuery = getRepos();
@@ -20,7 +22,7 @@
 
     let selection: Selection | null = $state(null);
 
-    const allAgents = $derived(repos.flatMap((r) => r.agents));
+    const allAgents = $derived(repos.flatMap((r) => r.sessions));
 
     const detailSrc = $derived.by(() => {
         const s = selection;
@@ -34,21 +36,25 @@
         const s = selection;
         if (!s) return "";
         if (s.kind === "agent") {
-            return allAgents.find((a) => a.id === s.id)?.name ?? s.id;
+            return allAgents.find((a) => a.id === s.id)?.slug;
         }
         return s.path;
     });
 
-    function selectAgent(id: string) {
-        selection = { kind: "agent", id };
+    const detailIcon = $derived.by(() => {
+        const s = selection;
+        if (!s) return null;
+        return s.kind === "agent"
+            ? ({ kind: "brand" as const, ...brandIcons[s.brand] })
+            : ({ kind: "feather" as const, name: "git-branch" });
+    });
+
+    function selectAgent(brand: AgentBrand, id: string) {
+        selection = { kind: "agent", brand, id };
     }
 
     function selectRepo(path: string) {
         selection = { kind: "repo", path };
-    }
-
-    function hasActiveAgents(repo: Repo): boolean {
-        return repo.agents.some((a) => a.status !== "completed");
     }
 </script>
 
@@ -141,33 +147,17 @@
             {:else}
                 {#each repos as repo (repo.path)}
                     <RepoColumn>
-                        <button
-                            class="repo-header"
-                            onclick={() => selectRepo(repo.path)}>
-                            <Pane
-                                stackedBelow
-                                borderColor={hasActiveAgents(repo)
-                                    ? "var(--ctp-peach)"
-                                    : undefined}>
-                                {#snippet header()}
-                                    <span class="repo-name">{repo.path}</span>
-                                {/snippet}
-                                <div class="repo-info">
-                                    <span>{repo.agents.length} agents</span>
-                                    <span>{repo.branch}</span>
-                                </div>
-                            </Pane>
-                        </button>
+                        <RepoCard
+                            {repo}
+                            onclick={() => selectRepo(repo.path)} />
 
-                        {#each repo.agents as agent (agent.id)}
+                        {#each repo.sessions as session (session.id)}
                             <AgentCard
-                                name={agent.name}
-                                status={agent.status}
-                                mode={agent.mode}
-                                slug={agent.slug}
+                                {session}
                                 selected={selection?.kind === "agent" &&
-                                    selection.id === agent.id}
-                                onclick={() => selectAgent(agent.id)} />
+                                    selection.id === session.id}
+                                onclick={() =>
+                                    selectAgent(session.brand, session.id)} />
                         {/each}
                     </RepoColumn>
                 {/each}
@@ -177,6 +167,20 @@
         <div class="detail">
             <Pane>
                 {#snippet header()}
+                    {#if detailIcon?.kind === "brand"}
+                        <picture>
+                            <source
+                                srcset={detailIcon.dark}
+                                media="(prefers-color-scheme: dark)" />
+                            <img
+                                src={detailIcon.light}
+                                alt="repository"
+                                width="16"
+                                height="16" />
+                        </picture>
+                    {:else if detailIcon?.kind === "feather"}
+                        <Icon name={detailIcon.name} />
+                    {/if}
                     <span class="detail-label">{detailLabel}</span>
                 {/snippet}
                 <iframe src={detailSrc} title="Detail pane"></iframe>
@@ -249,33 +253,6 @@
     .detail-label {
         font-family: var(--stack-code);
         font-weight: 600;
-    }
-
-    .repo-header {
-        display: block;
-        width: 100%;
-        padding: 0;
-        border: none;
-        background: transparent;
-        cursor: pointer;
-        text-align: left;
-        color: var(--ctp-text);
-    }
-
-    .repo-header:hover {
-        filter: brightness(0.95);
-    }
-
-    .repo-name {
-        font-family: var(--stack-code);
-        font-weight: 600;
-    }
-
-    .repo-info {
-        display: flex;
-        gap: 16px;
-        font-size: 12px;
-        color: var(--ctp-subtext0);
     }
 
     .status-message {

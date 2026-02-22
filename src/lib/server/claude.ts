@@ -3,7 +3,9 @@ import { createReadStream } from 'node:fs';
 import { createInterface } from 'node:readline';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import type { Agent, Repo } from '$lib/messages';
+import type { Agent, AgentRepo, AgentRepoSession } from './agent';
+import type { AgentBrand } from '../brands';
+import type { AgentSession } from '../messages';
 
 const REPO_PATHS = [
 	'C:\\Users\\banana\\Documents\\code\\jagman',
@@ -108,14 +110,14 @@ async function getProjectIndex(): Promise<Map<string, string>> {
  */
 async function readProjectSessions(
 	projectDirName: string
-): Promise<{ agents: Agent[]; branch: string }> {
+): Promise<{ sessions: AgentRepoSession[]; branch: string }> {
 	const projectPath = join(PROJECTS_DIR, projectDirName);
 
 	let allEntries: string[];
 	try {
 		allEntries = await readdir(projectPath);
 	} catch {
-		return { agents: [], branch: '' };
+		return { sessions: [], branch: '' };
 	}
 
 	const jsonlFiles = allEntries.filter((e) => e.endsWith('.jsonl'));
@@ -133,48 +135,77 @@ async function readProjectSessions(
 		})
 	);
 
-	const sessions = headers
+	const sessionHeaders = headers
 		.filter((h): h is SessionHeader => h !== null)
 		.sort(
 			(a, b) =>
 				new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
 		);
 
-	const branch = sessions[0]?.gitBranch ?? '';
+	const branch = sessionHeaders[0]?.gitBranch ?? '';
 
-	const agents: Agent[] = sessions.map((session, index) => ({
+	const sessions: AgentRepoSession[] = sessionHeaders.map((session, index) => ({
 		id: session.sessionId,
-		name: 'claude',
 		// TEMPORARY: fake active statuses for UI testing
 		status: index === 0 ? 'running' : index === 1 ? 'waiting' : 'completed',
+		mode: index < 2 ? 'standard' : null,
 		slug: session.slug ?? session.sessionId,
-		log: []
+		timestamp: session.timestamp,
 	}));
 
-	return { agents, branch };
+	return { sessions, branch };
 }
 
-/**
- * Load repos with real Claude Code session data.
- */
-export async function loadRepos(): Promise<Repo[]> {
-	const index = await getProjectIndex();
+export default class ClaudeAgent implements Agent {
+	brand: AgentBrand = 'cc';
 
-	const repos = await Promise.all(
-		REPO_PATHS.map(async (repoPath) => {
-			const projectDirName = index.get(repoPath.toLowerCase());
-			if (!projectDirName) {
-				return { path: repoPath, branch: 'HEAD', agents: [] };
+	async loadRepos(): Promise<AgentRepo[]> {
+		const index = await getProjectIndex();
+
+		const repos = await Promise.all(
+			REPO_PATHS.map(async (repoPath) => {
+				const projectDirName = index.get(repoPath.toLowerCase());
+				if (!projectDirName) {
+					return { path: repoPath, branch: 'HEAD', sessions: [] };
+				}
+
+				const { sessions, branch } = await readProjectSessions(projectDirName);
+				return {
+					path: repoPath,
+					branch: branch || 'HEAD',
+					sessions
+				};
+			})
+		);
+
+		return repos;
+	}
+
+	async loadSession(id: string): Promise<Omit<AgentSession, 'brand'> | null> {
+		const index = await getProjectIndex();
+
+		for (const [, projectDirName] of index) {
+			const projectPath = join(PROJECTS_DIR, projectDirName);
+
+			let entries: string[];
+			try {
+				entries = await readdir(projectPath);
+			} catch {
+				continue;
 			}
 
-			const { agents, branch } = await readProjectSessions(projectDirName);
-			return {
-				path: repoPath,
-				branch: branch || 'HEAD',
-				agents
-			};
-		})
-	);
+			for (const file of entries.filter(e => e.endsWith('.jsonl'))) {
+				const msg = await readFirstUserMessage(join(projectPath, file));
+				if (msg && msg.sessionId === id) {
+					return {
+						id,
+						slug: (msg.slug as string) ?? id,
+						log: ["User: Here's my prompt.", "Assistant: I'm putting out some output."], // TODO: read actual session log
+					};
+				}
+			}
+		}
 
-	return repos;
+		return null;
+	}
 }

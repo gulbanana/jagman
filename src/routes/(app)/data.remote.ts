@@ -1,9 +1,9 @@
 import { query } from '$app/server';
 import { mockAttentionCards } from '$lib/server/mock-data';
-import { loadRepos } from '$lib/server/sessions';
+import { getAllRepos } from '$lib/server/agent';
 
 export const getRepos = query(async () => {
-	return loadRepos();
+	return getAllRepos();
 });
 
 export const getAttentionCards = query(async () => {
