@@ -1,6 +1,7 @@
 import { homedir } from 'node:os';
 import type { AgentBrand } from "../brands";
 import type { Repo, RepoError, RepoSession, AgentSession } from "../messages";
+import { REPO_PATHS } from "./config";
 import ClaudeAgent from "./claude";
 import OpenCodeAgent from "./opencode";
 
@@ -68,6 +69,19 @@ export async function getAllRepos(): Promise<Repo[]> {
                     errors: []
                 });
             }
+        }
+    }
+
+    // Ensure every configured repo path has an entry, even if all agents failed
+    for (const repoPath of REPO_PATHS) {
+        const key = repoPath.toLowerCase();
+        if (!repoMap.has(key)) {
+            repoMap.set(key, {
+                path: repoPath,
+                branch: '',
+                sessions: [],
+                errors: []
+            });
         }
     }
 

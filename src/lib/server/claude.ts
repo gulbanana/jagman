@@ -17,12 +17,6 @@ import {
 } from './jsonl';
 import type { SessionMode } from '../messages';
 
-const REPO_PATHS = [
-	'C:\\Users\\banana\\Documents\\code\\jagman',
-	'C:\\Users\\banana\\Documents\\code\\gg',
-	'C:\\Users\\banana\\Documents\\code\\lockhaven'
-];
-
 const PROJECTS_DIR = join(homedir(), '.claude', 'projects');
 
 /** Cached index of workspace cwd → project directory name */
@@ -189,11 +183,11 @@ async function findSessionFile(sessionId: string): Promise<string | null> {
 export default class ClaudeAgent implements Agent {
 	brand: AgentBrand = 'cc';
 
-	async loadRepos(): Promise<AgentRepo[]> {
+	async loadRepos(repoPaths: string[]): Promise<AgentRepo[]> {
 		const index = await getProjectIndex();
 
 		const repos = await Promise.all(
-			REPO_PATHS.map(async (repoPath) => {
+			repoPaths.map(async (repoPath) => {
 				const projectDirName = index.get(repoPath.toLowerCase());
 				if (!projectDirName) {
 					return { path: repoPath, branch: 'HEAD', sessions: [] };
