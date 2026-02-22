@@ -18,6 +18,10 @@ import type { AgentSession, LogEntry, SessionMode, SessionStatus } from '../mess
  * `directory` header. JAGMAN starts a single server process and creates
  * one client per project directory to scope requests appropriately.
  *
+ * NOTE: The one-server, one-client-per-directory split may not be right.
+ * Session listing is global (we filter client-side), so multiple clients
+ * may be unnecessary — or we may eventually want one per *workspace*.
+ *
  * We spawn the server process ourselves rather than using the SDK's
  * `createOpencodeServer`, because the SDK uses `spawn('opencode', ...)`
  * without `shell: true`, which fails on Windows where the `opencode`
@@ -130,8 +134,8 @@ function mapOcMode(mode: string | null): SessionMode | null {
 	return 'standard';
 }
 
-function toTimestamp(unixSeconds: number): string {
-	return new Date(unixSeconds * 1000).toISOString();
+function toTimestamp(ms: number): string {
+	return new Date(ms).toISOString();
 }
 
 export default class OpenCodeAgent implements Agent {
@@ -152,8 +156,12 @@ export default class OpenCodeAgent implements Agent {
 			client.vcs.get().then((r) => r.data ?? { branch: 'HEAD' })
 		]);
 
+		const repoSessions = sessionsList.filter(
+			(s) => s.directory.toLowerCase() === repoPath.toLowerCase()
+		);
+
 		const sessions = await Promise.all(
-			sessionsList.map((session) =>
+			repoSessions.map((session) =>
 				this.mapSession(client, session, statusMap, repoPath)
 			)
 		);
@@ -192,7 +200,7 @@ export default class OpenCodeAgent implements Agent {
 			slug: session.title || session.id,
 			status: mapOcStatus(statusMap[session.id]),
 			mode,
-			timestamp: session.time.updated * 1000
+			timestamp: session.time.updated
 		};
 	}
 

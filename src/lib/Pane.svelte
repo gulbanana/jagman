@@ -78,7 +78,24 @@
 					var(--mode-base) 360deg
 				)
 				border-box;
-		animation: spark-rotate 2s linear(0, 0.176 16.67%, 0.324 33.33%, 0.676 66.67%, 0.824 83.33%, 1) infinite;
+		animation: spark-rotate 2s
+			linear(0, 0.176 16.67%, 0.324 33.33%, 0.676 66.67%, 0.824 83.33%, 1)
+			infinite;
+	}
+
+	@media (prefers-color-scheme: light) {
+		.pane.animated {
+			background:
+				linear-gradient(var(--ctp-crust), var(--ctp-crust)) padding-box,
+				conic-gradient(
+						from var(--spark-angle),
+						var(--mode-spark) 0deg,
+						var(--mode-base) 4deg,
+						var(--mode-spark) 64deg,
+						var(--mode-spark) 360deg
+					)
+					border-box;
+		}
 	}
 
 	@keyframes spark-rotate {

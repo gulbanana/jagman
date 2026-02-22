@@ -142,8 +142,7 @@ async function readProjectSessions(
 
 	const sessions: AgentRepoSession[] = sessionHeaders.map((session, index) => ({
 		id: session.sessionId,
-		// TEMPORARY: fake active statuses for UI testing
-		status: index === 0 ? 'running' : index === 1 ? 'waiting' : 'inactive',
+		status: 'inactive',
 		mode: session.mode,
 		slug: session.slug ?? session.sessionId,
 		timestamp: session.timestamp
