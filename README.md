@@ -1,42 +1,5 @@
-# sv
+# Jujutsu AGent MANager
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+JAGMAN is an experimental dashboard for TUI coding agents, using Jujutsu workspaces anonymous branches to coordinate work. JAGMAN aims to solve an MxNxO problem: multiple agents of multiple kinds running in multiple repositories. At this scale, users' attention is the bottleneck; we want to reduce the overhead of agent management by bringing information together and focusing attention on the few things that actually matter.
 
-## Creating a project
-
-If you're seeing this, you've probably already done this step. Congrats!
-
-```sh
-# create a new project
-npx sv create my-app
-```
-
-To recreate this project with the same configuration:
-
-```sh
-# recreate this project
-npx sv create --template minimal --types ts --install npm .
-```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+"Experimental" undersells it: JAGMAN is not ready for use. Feel free to look at the code, but don't bother trying to run it yet.
