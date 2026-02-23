@@ -37,7 +37,7 @@
 	}
 
 	.kind {
-		font-family: var(--stack-industrial);
+		font-family: var(--ff-industrial);
 		font-size: 11px;
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
@@ -46,14 +46,14 @@
 	}
 
 	.title {
-		font-family: var(--stack-ui);
+		font-family: var(--ff-ui);
 		font-size: 14px;
 		font-weight: 600;
 		color: var(--ctp-text);
 	}
 
 	.description {
-		font-family: var(--stack-code);
+		font-family: var(--ff-code);
 		font-size: 12px;
 		color: var(--ctp-subtext0);
 		margin-top: 2px;

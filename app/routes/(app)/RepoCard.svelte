@@ -11,7 +11,11 @@
 		onclick: () => void;
 	} = $props();
 
-	const modeRank: Record<SessionMode, number> = { plan: 1, standard: 2, yolo: 3 };
+	const modeRank: Record<SessionMode, number> = {
+		plan: 1,
+		standard: 2,
+		yolo: 3,
+	};
 
 	const greatestMode = $derived(
 		repo.sessions.reduce<SessionMode | null>((best, s) => {
@@ -20,17 +24,48 @@
 			return modeRank[s.mode] > modeRank[best] ? s.mode : best;
 		}, null),
 	);
+
+	const running = $derived(
+		repo.sessions.filter(
+			(s) => s.status === "running" || s.status === "external",
+		).length,
+	);
+	const waiting = $derived(
+		repo.sessions.filter((s) => s.status === "waiting").length,
+	);
+	const done = $derived(
+		repo.sessions.filter((s) => s.status === "inactive").length,
+	);
 </script>
 
 <button class="repo-header" {onclick}>
 	<Pane stackedBelow>
 		{#snippet header()}
-			<span class="repo-name" class:standard={greatestMode === "standard"} class:plan={greatestMode === "plan"} class:yolo={greatestMode === "yolo"}
-				>{repo.path}</span>
+			<span
+				class="repo-name"
+				class:standard={greatestMode === "standard"}
+				class:plan={greatestMode === "plan"}
+				class:yolo={greatestMode === "yolo"}>{repo.path}</span>
 		{/snippet}
 		<div class="repo-info">
-			<span>{repo.sessions.length} sessions</span>
-			<span>{repo.branch}</span>
+			{#if running > 0}
+				<span class="stat"
+					><span class="dot dot-running"></span><span class="value"
+						>{running}</span
+					><span class="desc">running</span></span>
+			{/if}
+			{#if waiting > 0}
+				<span class="stat"
+					><span class="dot dot-waiting"></span><span class="value"
+						>{waiting}</span
+					><span class="desc">waiting</span></span>
+			{/if}
+			{#if done > 0}
+				<span class="stat"
+					><span class="dot dot-done"></span><span class="value"
+						>{done}+</span
+					><span class="desc">done</span></span>
+			{/if}
 		</div>
 		{#if repo.errors.length > 0}
 			<div class="repo-errors">
@@ -59,7 +94,7 @@
 	}
 
 	.repo-name {
-		font-family: var(--stack-code);
+		font-family: var(--ff-code);
 		font-weight: 600;
 
 		&.standard {
@@ -78,8 +113,44 @@
 	.repo-info {
 		display: flex;
 		gap: 16px;
-		font-size: 12px;
+	}
+
+	.stat {
+		display: flex;
+		align-items: baseline;
+		gap: 4px;
+	}
+
+	.value {
+		font-family: var(--ff-code);
+		font-size: 13px;
+		color: var(--ctp-text);
+	}
+
+	.desc {
+		font-family: var(--ff-ui);
+		font-size: 11px;
 		color: var(--ctp-subtext0);
+	}
+
+	.dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 8px;
+		flex-shrink: 0;
+		align-self: center;
+	}
+
+	.dot-running {
+		background: var(--ctp-green);
+	}
+
+	.dot-waiting {
+		background: var(--ctp-yellow);
+	}
+
+	.dot-done {
+		background: var(--ctp-overlay1);
 	}
 
 	.repo-errors {

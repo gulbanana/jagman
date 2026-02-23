@@ -305,11 +305,11 @@
         justify-content: center;
         background: var(--ctp-crust);
         color: var(--ctp-subtext0);
-        font-family: var(--stack-ui);
+        font-family: var(--ff-ui);
     }
 
     .detail-label {
-        font-family: var(--stack-code);
+        font-family: var(--ff-code);
         font-weight: 600;
 
         overflow: hidden;
@@ -323,7 +323,7 @@
         justify-content: center;
         padding: 32px;
         color: var(--ctp-subtext0);
-        font-family: var(--stack-ui);
+        font-family: var(--ff-ui);
     }
 
     /* Mock attention card content */
@@ -334,7 +334,7 @@
         padding: 8px;
         border-radius: 4px;
         background: var(--ctp-mantle);
-        font-family: var(--stack-code);
+        font-family: var(--ff-code);
         font-size: 13px;
         color: var(--ctp-text);
         white-space: pre-wrap;
@@ -346,7 +346,7 @@
         padding: 8px;
         border-radius: 4px;
         background: var(--ctp-mantle);
-        font-family: var(--stack-code);
+        font-family: var(--ff-code);
         font-size: 12px;
         color: var(--ctp-text);
         line-height: 1.4;
@@ -372,7 +372,7 @@
         border: 1px solid var(--ctp-overlay0);
         border-radius: 4px;
         background: var(--ctp-mantle);
-        font-family: var(--stack-code);
+        font-family: var(--ff-code);
         font-size: 13px;
         color: var(--ctp-text);
     }
@@ -395,7 +395,7 @@
         padding: 4px 8px;
         border-radius: 4px;
         background: var(--ctp-mantle);
-        font-family: var(--stack-code);
+        font-family: var(--ff-code);
         font-size: 12px;
     }
 
@@ -419,7 +419,7 @@
         padding: 4px 16px;
         border: none;
         border-radius: 4px;
-        font-family: var(--stack-ui);
+        font-family: var(--ff-ui);
         font-size: 13px;
         font-weight: 600;
         cursor: pointer;

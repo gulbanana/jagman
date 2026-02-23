@@ -55,7 +55,7 @@
 
 <style>
 	.log {
-		font-family: var(--stack-code);
+		font-family: var(--ff-code);
 		font-size: 12px;
 		display: flex;
 		flex-direction: column;

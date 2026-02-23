@@ -32,7 +32,7 @@
     .layout {
         margin: 8px 0;
 
-        font-family: var(--stack-code);
+        font-family: var(--ff-code);
         font-size: 32px;
 
         display: grid;

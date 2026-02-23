@@ -127,7 +127,7 @@ This does not apply to font-size, letter-spacing, line-height, or values derived
 
 ### Font Stacks
 
-Font stacks are defined as CSS custom properties (`--stack-*`) in `theme.css`. Typography is still being refined, but the general approach is to provide purpose-specific stacks (e.g. body text, condensed headings, monospace) that components reference by variable rather than by literal font names.
+Font stacks are defined as CSS custom properties (`--ff-*`) in `theme.css`. Typography is still being refined, but the general approach is to provide purpose-specific stacks (e.g. body text, condensed headings, monospace) that components reference by variable rather than by literal font names.
 
 ### Lookless Scrolling
 
@@ -167,7 +167,7 @@ When a region has no content to display, show centered placeholder text using th
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: var(--stack-ui);
+    font-family: var(--ff-ui);
     color: var(--ctp-subtext0);
 }
 ```

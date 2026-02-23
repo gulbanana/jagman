@@ -15,7 +15,7 @@
 <style>
     .error-message {
         color: var(--ctp-maroon);
-        font-family: var(--stack-code);
+        font-family: var(--ff-code);
         white-space: pre-wrap;
         word-break: break-word;
         user-select: text;

@@ -49,6 +49,6 @@
 <style>
 	.status {
 		color: var(--ctp-subtext0);
-		font-family: var(--stack-ui);
+		font-family: var(--ff-ui);
 	}
 </style>

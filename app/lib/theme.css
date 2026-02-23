@@ -2,8 +2,8 @@
 @import "@catppuccin/palette/css/catppuccin.css";
 
 :root {
-    --stack-ui: system-ui, sans-serif;
-    --stack-rounded: ui-rounded,
+    --ff-ui: system-ui, sans-serif;
+    --ff-rounded: ui-rounded,
         'Hiragino Maru Gothic ProN',
         Quicksand,
         Comfortaa,
@@ -13,19 +13,21 @@
         Calibri,
         source-sans-pro,
         sans-serif;
-    --stack-industrial: Bahnschrift,
+    --ff-industrial: Bahnschrift,
         'DIN Alternate',
         'Franklin Gothic Medium',
         'Nimbus Sans Narrow',
         sans-serif-condensed,
         sans-serif;
-    --stack-code: ui-monospace,
+    --ff-code: ui-monospace,
         'Cascadia Code',
         'Source Code Pro',
         Menlo,
         Consolas,
         'DejaVu Sans Mono',
         monospace;
+
+    --fs-body: 16px;
 
     --ctp-crust: var(--ctp-latte-crust);
     --ctp-mantle: var(--ctp-latte-mantle);
@@ -95,7 +97,8 @@ body {
     -moz-osx-font-smoothing: grayscale;
     -webkit-text-size-adjust: 100%;
 
-    font-family: var(--stack-ui);
+    font-family: var(--ff-ui);
+    font-size: var(--fs-body);
 
     background: var(--ctp-base);
     color: var(--ctp-text);
