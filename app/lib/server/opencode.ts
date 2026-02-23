@@ -10,6 +10,7 @@ import type {
 import type { Agent, AgentRepo, AgentRepoSession } from './agent';
 import type { AgentBrand } from '../brands';
 import type { AgentSession, LogEntry, SessionMode, SessionStatus } from '../messages';
+import { buildLastEntries } from './last-entries';
 import { getAgentProcesses, getWorkspacesWithAgent, markExternalSessions } from './processes';
 
 /**
@@ -142,8 +143,8 @@ function toTimestamp(ms: number): string {
 export default class OpenCodeAgent implements Agent {
 	brand: AgentBrand = 'oc';
 
-	async loadRepos(repoPaths: string[]): Promise<AgentRepo[]> {
-		const repos = await Promise.all(repoPaths.map((path) => this.loadRepo(path)));
+	async loadRepos(repoPaths: string[], maxSessions: number): Promise<AgentRepo[]> {
+		const repos = await Promise.all(repoPaths.map((path) => this.loadRepo(path, maxSessions)));
 
 		const processes = await getAgentProcesses();
 		const activeWorkspaces = getWorkspacesWithAgent(
@@ -156,7 +157,7 @@ export default class OpenCodeAgent implements Agent {
 		return repos;
 	}
 
-	private async loadRepo(repoPath: string): Promise<AgentRepo> {
+	private async loadRepo(repoPath: string, maxSessions: number): Promise<AgentRepo> {
 		const client = await getClient(repoPath);
 
 		const [sessionsList, statusMap, vcsInfo] = await Promise.all([
@@ -171,8 +172,11 @@ export default class OpenCodeAgent implements Agent {
 			(s) => s.directory.toLowerCase() === repoPath.toLowerCase()
 		);
 
+		repoSessions.sort((a, b) => b.time.updated - a.time.updated);
+		const recentSessions = repoSessions.slice(0, maxSessions);
+
 		const sessions = await Promise.all(
-			repoSessions.map((session) =>
+			recentSessions.map((session) =>
 				this.mapSession(client, session, statusMap, repoPath)
 			)
 		);
@@ -196,23 +200,49 @@ export default class OpenCodeAgent implements Agent {
 			path: { id: session.id }
 		});
 		const messages = result.data ?? [];
+
 		let mode: SessionMode | null = null;
-		let lastAssistantText: string | null = null;
-		for (let i = messages.length - 1; i >= 0; i--) {
-			if (messages[i].info.role === 'assistant') {
-				if (mode === null) {
-					mode = mapOcMode(
-						(messages[i].info as OcAssistantMessage).mode
-					);
+		let seq = 0;
+		let lastAssistant: { text: string; timestamp: string; seq: number } | null = null;
+		let lastToolUse: { id: string; tool: string; args: Record<string, unknown>; timestamp: string; seq: number } | null = null;
+		const toolResults = new Map<string, boolean>();
+
+		for (const msg of messages) {
+			if (msg.info.role !== 'assistant') continue;
+			const timestamp = toTimestamp(msg.info.time.created);
+
+			mode = mapOcMode((msg.info as OcAssistantMessage).mode) ?? mode;
+
+			const textParts = msg.parts.filter(
+				(p): p is OcTextPart => p.type === 'text'
+			);
+			const text = textParts.map((p) => p.text).join('\n');
+			if (text) {
+				lastAssistant = { text, timestamp, seq: seq++ };
+			}
+
+			const toolParts = msg.parts.filter(
+				(p): p is OcToolPart => p.type === 'tool'
+			);
+			for (const tp of toolParts) {
+				let toolTimestamp = timestamp;
+				if (
+					tp.state.status === 'running' ||
+					tp.state.status === 'completed' ||
+					tp.state.status === 'error'
+				) {
+					toolTimestamp = toTimestamp(tp.state.time.start);
 				}
-				if (lastAssistantText === null) {
-					const textParts = messages[i].parts.filter(
-						(p): p is OcTextPart => p.type === 'text'
-					);
-					const text = textParts.map((p) => p.text).join('\n');
-					if (text) lastAssistantText = text;
-				}
-				if (mode !== null && lastAssistantText !== null) break;
+				const toolId = `${session.id}-${tp.tool}-${seq}`;
+				const success = tp.state.status === 'completed';
+				toolResults.set(toolId, success);
+				lastToolUse = {
+					id: toolId,
+					tool: tp.tool,
+					args: tp.state.input,
+					timestamp: toolTimestamp,
+					seq: seq++
+				};
 			}
 		}
 
@@ -223,7 +253,7 @@ export default class OpenCodeAgent implements Agent {
 			status: mapOcStatus(statusMap[session.id]),
 			mode,
 			timestamp: session.time.updated,
-			lastAssistantText
+			lastEntries: buildLastEntries(lastAssistant, lastToolUse, toolResults)
 		};
 	}
 

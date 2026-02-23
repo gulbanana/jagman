@@ -17,7 +17,7 @@ export type AgentRepo = {
 
 export interface Agent {
     brand: AgentBrand;
-    loadRepos(repoPaths: string[]): Promise<AgentRepo[]>;
+    loadRepos(repoPaths: string[], maxSessions: number): Promise<AgentRepo[]>;
     loadSession(id: string): Promise<Omit<AgentSession, 'brand'> | null>;
 }
 
@@ -44,7 +44,7 @@ export async function getAllRepos(): Promise<Repo[]> {
     for (const agent of wellKnownAgents) {
         let agentRepos: AgentRepo[];
         try {
-            agentRepos = await agent.loadRepos(REPO_PATHS);
+            agentRepos = await agent.loadRepos(REPO_PATHS, 10);
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
             agentErrors.push({ brand: agent.brand, message });

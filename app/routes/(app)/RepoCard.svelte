@@ -1,7 +1,7 @@
 <script lang="ts">
 	import ErrorSpan from "$lib/ErrorSpan.svelte";
 	import Pane from "$lib/Pane.svelte";
-	import type { Repo } from "$lib/messages";
+	import type { Repo, SessionMode } from "$lib/messages";
 
 	let {
 		repo,
@@ -11,15 +11,21 @@
 		onclick: () => void;
 	} = $props();
 
-	const hasActiveAgents = $derived(
-		repo.sessions.some((a) => a.status !== "inactive"),
+	const modeRank: Record<SessionMode, number> = { plan: 1, standard: 2, yolo: 3 };
+
+	const greatestMode = $derived(
+		repo.sessions.reduce<SessionMode | null>((best, s) => {
+			if (s.status === "inactive" || s.mode === null) return best;
+			if (best === null) return s.mode;
+			return modeRank[s.mode] > modeRank[best] ? s.mode : best;
+		}, null),
 	);
 </script>
 
 <button class="repo-header" {onclick}>
 	<Pane stackedBelow>
 		{#snippet header()}
-			<span class="repo-name" class:active={hasActiveAgents}
+			<span class="repo-name" class:standard={greatestMode === "standard"} class:plan={greatestMode === "plan"} class:yolo={greatestMode === "yolo"}
 				>{repo.path}</span>
 		{/snippet}
 		<div class="repo-info">
@@ -56,8 +62,16 @@
 		font-family: var(--stack-code);
 		font-weight: 600;
 
-		&.active {
+		&.standard {
 			color: var(--ctp-peach);
+		}
+
+		&.plan {
+			color: var(--ctp-blue);
+		}
+
+		&.yolo {
+			color: var(--ctp-red);
 		}
 	}
 

@@ -158,6 +158,25 @@ Used by:
 - **Repo row** (`.repos` in `+page.svelte`) — horizontal scroll, fades right
 - **RepoColumn** — vertical scroll, fades bottom
 
+### Empty States
+
+When a region has no content to display, show centered placeholder text using the UI font in the `--ctp-subtext0` colour:
+
+```css
+.empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--stack-ui);
+    color: var(--ctp-subtext0);
+}
+```
+
+Used by:
+- **Detail pane placeholder** (`detail/empty`) — "Open a repository to get started."
+- **AgentCard** — "Awaiting prompt." when no log entries exist
+- **Status messages** (`.status-message` in `+page.svelte`) — loading and error states
+
 ## Code Style
 
 ### Null Over Undefined

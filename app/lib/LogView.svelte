@@ -3,14 +3,6 @@
 
 	let { log }: { log: LogEntry[] } = $props();
 
-	let logEl: HTMLDivElement;
-
-	$effect(() => {
-		if (log.length > 0 && logEl) {
-			logEl.lastElementChild?.scrollIntoView();
-		}
-	});
-
 	function formatToolUse(entry: ToolUseEntry): string {
 		const args = entry.args;
 
@@ -37,7 +29,7 @@
 	}
 </script>
 
-<div class="log" bind:this={logEl}>
+<div class="log">
 	{#each log as entry, i (i)}
 		{#if entry.type === "user"}
 			<div class="log-line user">{entry.text}</div>

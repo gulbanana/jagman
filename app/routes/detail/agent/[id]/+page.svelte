@@ -6,6 +6,17 @@
 
 	const agentQuery = getAgentDetail(page.params.id ?? "");
 	const agent = $derived(agentQuery.current);
+
+	let wrapperEl = $state<HTMLDivElement>();
+
+	$effect(() => {
+		if (agent && agent.log.length > 0 && wrapperEl) {
+			const logEl = wrapperEl.firstElementChild;
+			if (logEl) {
+				logEl.lastElementChild?.scrollIntoView();
+			}
+		}
+	});
 </script>
 
 {#if agentQuery.error}
@@ -18,7 +29,9 @@
 	<div class="status">Loading...</div>
 {:else if agent}
 	<svelte:boundary>
-		<LogView log={agent.log} />
+		<div bind:this={wrapperEl}>
+			<LogView log={agent.log} />
+		</div>
 		{#snippet failed(error)}
 			<div class="status">
 				<ErrorSpan>

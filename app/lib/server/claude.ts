@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import type { Agent, AgentRepo, AgentRepoSession } from './agent';
 import type { AgentBrand } from '../brands';
 import type { AgentSession, LogEntry } from '../messages';
+import { buildLastEntries } from './last-entries';
 import {
 	readFirstUserRecord,
 	readSessionOverview,
@@ -32,7 +33,7 @@ interface SessionHeader {
 	mode: SessionMode | null;
 	timestamp: number;
 	gitBranch: string;
-	lastAssistantText: string | null;
+	lastEntries: LogEntry[];
 }
 
 /** Extract the first line from a (possibly multi-line) string. */
@@ -112,7 +113,8 @@ async function getProjectIndex(): Promise<Map<string, string>> {
  */
 async function readProjectSessions(
 	projectDirName: string,
-	workspace: string
+	workspace: string,
+	maxSessions: number
 ): Promise<{ sessions: AgentRepoSession[]; branch: string }> {
 	const projectPath = join(PROJECTS_DIR, projectDirName);
 
@@ -125,9 +127,24 @@ async function readProjectSessions(
 
 	const jsonlFiles = allEntries.filter((e) => e.endsWith('.jsonl'));
 
-	const headers = await Promise.all(
-		jsonlFiles.map(async (file): Promise<SessionHeader | null> => {
+	// Stat files to get mtime, then keep only the most recent ones
+	const fileStats = await Promise.all(
+		jsonlFiles.map(async (file) => {
 			const filePath = join(projectPath, file);
+			try {
+				const s = await stat(filePath);
+				return { file, filePath, mtimeMs: s.mtimeMs };
+			} catch {
+				return null;
+			}
+		})
+	);
+	const validFiles = fileStats.filter((f): f is NonNullable<typeof f> => f !== null);
+	validFiles.sort((a, b) => b.mtimeMs - a.mtimeMs);
+	const recentFiles = validFiles.slice(0, maxSessions);
+
+	const headers = await Promise.all(
+		recentFiles.map(async ({ file, filePath }): Promise<SessionHeader | null> => {
 			const overview = await readSessionOverview(filePath);
 			if (!overview || !overview.hasContent) return null;
 
@@ -140,7 +157,7 @@ async function readProjectSessions(
 				mode: mapPermissionMode(overview.permissionMode),
 				timestamp: new Date(overview.lastTimestamp).getTime(),
 				gitBranch: overview.gitBranch,
-				lastAssistantText: overview.lastAssistantText
+				lastEntries: buildLastEntries(overview.lastAssistant, overview.lastToolUse, overview.toolResults)
 			};
 		})
 	);
@@ -157,7 +174,7 @@ async function readProjectSessions(
 		mode: session.mode,
 		title: session.title,
 		timestamp: session.timestamp,
-		lastAssistantText: session.lastAssistantText
+		lastEntries: session.lastEntries
 	}));
 
 	return { sessions, branch };
@@ -200,7 +217,7 @@ async function findSessionFile(sessionId: string): Promise<string | null> {
 export default class ClaudeAgent implements Agent {
 	brand: AgentBrand = 'cc';
 
-	async loadRepos(repoPaths: string[]): Promise<AgentRepo[]> {
+	async loadRepos(repoPaths: string[], maxSessions: number): Promise<AgentRepo[]> {
 		const index = await getProjectIndex();
 
 		const repos = await Promise.all(
@@ -210,7 +227,7 @@ export default class ClaudeAgent implements Agent {
 					return { path: repoPath, branch: 'HEAD', sessions: [] };
 				}
 
-				const { sessions, branch } = await readProjectSessions(projectDirName, repoPath);
+				const { sessions, branch } = await readProjectSessions(projectDirName, repoPath, maxSessions);
 				return {
 					path: repoPath,
 					branch: branch || 'HEAD',

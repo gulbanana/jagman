@@ -20,7 +20,7 @@ export type RepoSession = {
 	status: SessionStatus;
 	mode: SessionMode | null;
 	timestamp: number;
-	lastAssistantText: string | null;
+	lastEntries: LogEntry[];
 };
 
 export type SessionStatus = "running" | "waiting" | "inactive" | "external";

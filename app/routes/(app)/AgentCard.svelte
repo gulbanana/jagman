@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Pane from "$lib/Pane.svelte";
+	import LogView from "$lib/LogView.svelte";
 	import { brandIcons, brandNames } from "$lib/brands";
 	import type { RepoSession } from "$lib/messages";
 
@@ -14,6 +15,16 @@
 	} = $props();
 
 	let formattedTime = $derived(new Date(session.timestamp).toLocaleString());
+
+	let cardEntries = $derived(
+		session.lastEntries.map((entry) => {
+			if (entry.type === 'assistant') {
+				const nl = entry.text.indexOf('\n');
+				return nl === -1 ? entry : { ...entry, text: entry.text.slice(0, nl) };
+			}
+			return entry;
+		})
+	);
 </script>
 
 <button class="card" class:selected {onclick}>
@@ -34,10 +45,12 @@
 					height="16" />
 			</picture>
 			<span class="title">{session.title}</span>
-			{#if session.lastAssistantText}
-				<span class="details">{session.lastAssistantText}</span>
+			{#if session.lastEntries.length > 0}
+				<div class="details">
+					<LogView log={cardEntries} />
+				</div>
 			{:else}
-				<span class="details awaiting">Awaiting prompt.</span>
+				<div class="details empty-state">Awaiting prompt.</div>
 			{/if}
 			<time class="timestamp">{formattedTime}</time>
 		</div>
@@ -97,21 +110,14 @@
 
 	.details {
 		grid-area: details;
-		font-family: var(--stack-code);
-		font-size: 12px;
-		display: -webkit-box;
-		-webkit-box-orient: vertical;
-		-webkit-line-clamp: 2;
-		line-clamp: 2;
 		overflow: hidden;
-		max-height: 56px;
 	}
 
-	.details.awaiting {
+	.details.empty-state {
 		display: flex;
 		align-items: center;
-		font-style: italic;
-		color: var(--ctp-overlay1);
+		font-family: var(--stack-ui);
+		color: var(--ctp-subtext0);
 	}
 
 	.timestamp {

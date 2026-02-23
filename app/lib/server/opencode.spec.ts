@@ -75,7 +75,7 @@ describe('opencode server lifecycle', () => {
 		it('spawns opencode with shell:true and correct arguments', async () => {
 			spawnEmitsUrl();
 			const agent = new OpenCodeAgent();
-			await agent.loadRepos(['/test/repo']);
+			await agent.loadRepos(['/test/repo'], 10);
 
 			expect(mockSpawn).toHaveBeenCalledOnce();
 			expect(mockSpawn).toHaveBeenCalledWith(
@@ -93,7 +93,7 @@ describe('opencode server lifecycle', () => {
 		it('passes the parsed server URL to createOpencodeClient', async () => {
 			spawnEmitsUrl('http://127.0.0.1:54321');
 			const agent = new OpenCodeAgent();
-			await agent.loadRepos(['/test/repo']);
+			await agent.loadRepos(['/test/repo'], 10);
 
 			expect(mockCreateOpencodeClient).toHaveBeenCalledWith(
 				expect.objectContaining({
@@ -106,8 +106,8 @@ describe('opencode server lifecycle', () => {
 		it('reuses the server across sequential loadRepos calls', async () => {
 			spawnEmitsUrl();
 			const agent = new OpenCodeAgent();
-			await agent.loadRepos(['/repo/a']);
-			await agent.loadRepos(['/repo/b']);
+			await agent.loadRepos(['/repo/a'], 10);
+			await agent.loadRepos(['/repo/b'], 10);
 
 			expect(mockSpawn).toHaveBeenCalledOnce();
 		});
@@ -115,8 +115,8 @@ describe('opencode server lifecycle', () => {
 		it('creates separate clients for different directories', async () => {
 			spawnEmitsUrl();
 			const agent = new OpenCodeAgent();
-			await agent.loadRepos(['/repo/a']);
-			await agent.loadRepos(['/repo/b']);
+			await agent.loadRepos(['/repo/a'], 10);
+			await agent.loadRepos(['/repo/b'], 10);
 
 			expect(mockCreateOpencodeClient).toHaveBeenCalledTimes(2);
 			expect(mockCreateOpencodeClient).toHaveBeenCalledWith(
@@ -130,8 +130,8 @@ describe('opencode server lifecycle', () => {
 		it('reuses the client for the same directory', async () => {
 			spawnEmitsUrl();
 			const agent = new OpenCodeAgent();
-			await agent.loadRepos(['/repo/a']);
-			await agent.loadRepos(['/repo/a']);
+			await agent.loadRepos(['/repo/a'], 10);
+			await agent.loadRepos(['/repo/a'], 10);
 
 			expect(mockCreateOpencodeClient).toHaveBeenCalledOnce();
 		});
@@ -146,7 +146,7 @@ describe('opencode server lifecycle', () => {
 			});
 
 			const agent = new OpenCodeAgent();
-			await expect(agent.loadRepos(['/test/repo'])).rejects.toThrow(
+			await expect(agent.loadRepos(['/test/repo'], 10)).rejects.toThrow(
 				'spawn opencode ENOENT'
 			);
 		});
@@ -159,7 +159,7 @@ describe('opencode server lifecycle', () => {
 			});
 
 			const agent = new OpenCodeAgent();
-			await expect(agent.loadRepos(['/test/repo'])).rejects.toThrow(
+			await expect(agent.loadRepos(['/test/repo'], 10)).rejects.toThrow(
 				'exited with code 1'
 			);
 		});
@@ -173,7 +173,7 @@ describe('opencode server lifecycle', () => {
 			});
 
 			const agent = new OpenCodeAgent();
-			await expect(agent.loadRepos(['/test/repo'])).rejects.toThrow(
+			await expect(agent.loadRepos(['/test/repo'], 10)).rejects.toThrow(
 				'fatal: config error'
 			);
 		});
@@ -189,7 +189,7 @@ describe('opencode server lifecycle', () => {
 			});
 
 			const agent = new OpenCodeAgent();
-			await expect(agent.loadRepos(['/test/repo'])).rejects.toThrow(
+			await expect(agent.loadRepos(['/test/repo'], 10)).rejects.toThrow(
 				'Failed to parse server url'
 			);
 		});
@@ -200,7 +200,7 @@ describe('opencode server lifecycle', () => {
 			mockSpawn.mockReturnValue(proc);
 
 			const agent = new OpenCodeAgent();
-			const promise = agent.loadRepos(['/test/repo']);
+			const promise = agent.loadRepos(['/test/repo'], 10);
 
 			// Attach the rejection handler before advancing timers so
 			// the rejection is never momentarily unhandled.
@@ -214,7 +214,7 @@ describe('opencode server lifecycle', () => {
 		it('kills the server process', async () => {
 			const proc = spawnEmitsUrl();
 			const agent = new OpenCodeAgent();
-			await agent.loadRepos(['/test/repo']);
+			await agent.loadRepos(['/test/repo'], 10);
 
 			closeOpenCodeServers();
 
@@ -229,12 +229,12 @@ describe('opencode server lifecycle', () => {
 		it('allows a new server to be spawned after close', async () => {
 			spawnEmitsUrl('http://127.0.0.1:11111');
 			const agent = new OpenCodeAgent();
-			await agent.loadRepos(['/test/repo']);
+			await agent.loadRepos(['/test/repo'], 10);
 
 			closeOpenCodeServers();
 
 			spawnEmitsUrl('http://127.0.0.1:22222');
-			await agent.loadRepos(['/test/repo']);
+			await agent.loadRepos(['/test/repo'], 10);
 
 			expect(mockSpawn).toHaveBeenCalledTimes(2);
 		});
@@ -242,12 +242,12 @@ describe('opencode server lifecycle', () => {
 		it('clears the client cache so new clients are created for the same directory', async () => {
 			spawnEmitsUrl('http://127.0.0.1:11111');
 			const agent = new OpenCodeAgent();
-			await agent.loadRepos(['/test/repo']);
+			await agent.loadRepos(['/test/repo'], 10);
 
 			closeOpenCodeServers();
 
 			spawnEmitsUrl('http://127.0.0.1:22222');
-			await agent.loadRepos(['/test/repo']);
+			await agent.loadRepos(['/test/repo'], 10);
 
 			expect(mockCreateOpencodeClient).toHaveBeenCalledTimes(2);
 		});
@@ -255,12 +255,12 @@ describe('opencode server lifecycle', () => {
 		it('passes the new server URL to clients after restart', async () => {
 			spawnEmitsUrl('http://127.0.0.1:11111');
 			const agent = new OpenCodeAgent();
-			await agent.loadRepos(['/test/repo']);
+			await agent.loadRepos(['/test/repo'], 10);
 
 			closeOpenCodeServers();
 
 			spawnEmitsUrl('http://127.0.0.1:22222');
-			await agent.loadRepos(['/test/repo']);
+			await agent.loadRepos(['/test/repo'], 10);
 
 			const secondCall = mockCreateOpencodeClient.mock.calls[1];
 			expect(secondCall[0]).toEqual(
