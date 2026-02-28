@@ -1,6 +1,6 @@
 <script lang="ts">
 	import "$lib/theme.css";
-	import favicon from "$lib/assets/favicon.svg";
+	import favicon from "$lib/assets/jg.svg";
 
 	let { children } = $props();
 </script>
