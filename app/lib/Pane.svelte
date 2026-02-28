@@ -123,9 +123,10 @@
 
 		border-bottom: 1px solid var(--ctp-overlay0);
 		background: var(--ctp-mantle);
-		color: var(--ctp-subtext1);
-		font-family: var(--stack-industrial);
-		font-size: 14px;
+
+		font-family: var(--ff-code); /* either identifier or log */
+		font-size: var(--fs-header);
+		font-weight: 600;
 
 		display: flex;
 		gap: 8px;

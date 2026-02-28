@@ -1,4 +1,5 @@
 <script lang="ts">
+	import EventHeader from "$lib/EventHeader.svelte";
 	import type { Snippet } from "svelte";
 
 	let {
@@ -15,7 +16,7 @@
 </script>
 
 <div class="card">
-	<div class="kind">{kind}</div>
+	<EventHeader>{kind}</EventHeader>
 	<div class="title">{title}</div>
 	<div class="description">{description}</div>
 	{#if children}
@@ -36,27 +37,14 @@
 		min-width: 512px;
 	}
 
-	.kind {
-		font-family: var(--ff-industrial);
-		font-size: 11px;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		color: var(--ctp-overlay2);
-		margin-bottom: 2px;
-	}
-
 	.title {
-		font-family: var(--ff-ui);
-		font-size: 14px;
-		font-weight: 600;
-		color: var(--ctp-text);
+		margin: 4px 0;
 	}
 
 	.description {
 		font-family: var(--ff-code);
-		font-size: 12px;
+		font-size: var(--fs-content);
 		color: var(--ctp-subtext0);
-		margin-top: 2px;
 	}
 
 	.body {

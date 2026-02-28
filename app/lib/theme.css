@@ -28,6 +28,8 @@
         monospace;
 
     --fs-body: 16px;
+    --fs-header: 13px;
+    --fs-content: 11px;
 
     --ctp-crust: var(--ctp-latte-crust);
     --ctp-mantle: var(--ctp-latte-mantle);

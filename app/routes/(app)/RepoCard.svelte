@@ -94,9 +94,6 @@
 	}
 
 	.repo-name {
-		font-family: var(--ff-code);
-		font-weight: 600;
-
 		&.standard {
 			color: var(--ctp-peach);
 		}
@@ -123,14 +120,11 @@
 
 	.value {
 		font-family: var(--ff-code);
-		font-size: 13px;
-		color: var(--ctp-text);
+		font-size: var(--fs-content);
 	}
 
 	.desc {
-		font-family: var(--ff-ui);
-		font-size: 11px;
-		color: var(--ctp-subtext0);
+		font-size: var(--fs-content);
 	}
 
 	.dot {

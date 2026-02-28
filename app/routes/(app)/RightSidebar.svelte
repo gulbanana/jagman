@@ -1,57 +1,170 @@
 <script lang="ts">
 	import { overflowing } from "$lib/overflowing";
+	import { brandIcons, type AgentBrand } from "$lib/brands";
+	import jgLight from "$lib/assets/jg-light.svg";
+	import jgDark from "$lib/assets/jg-dark.svg";
+	import EventHeader from "$lib/EventHeader.svelte";
 
-	type ActivityKind = "started" | "completed" | "permission" | "approved" | "denied" | "tool" | "error" | "plan" | "yolo";
+	type ActivitySource = AgentBrand | "jg";
 
 	type ActivityEntry = {
-		kind: ActivityKind;
-		agent: string;
+		source: ActivitySource;
+		event: string;
 		detail: string;
 		minutesAgo: number;
 	};
 
 	const mockActivity: ActivityEntry[] = [
-		{ kind: "tool", agent: "claude-12", detail: "ran npm test", minutesAgo: 0 },
-		{ kind: "approved", agent: "opencode-3", detail: "run a command", minutesAgo: 1 },
-		{ kind: "permission", agent: "opencode-1", detail: "edit a file", minutesAgo: 1 },
-		{ kind: "tool", agent: "claude-12", detail: "edited api.ts", minutesAgo: 2 },
-		{ kind: "plan", agent: "claude-7", detail: "jagman", minutesAgo: 3 },
-		{ kind: "started", agent: "claude-12", detail: "api-server", minutesAgo: 5 },
-		{ kind: "error", agent: "opencode-2", detail: "build failed", minutesAgo: 6 },
-		{ kind: "completed", agent: "claude-9", detail: "jagman", minutesAgo: 8 },
-		{ kind: "denied", agent: "opencode-1", detail: "rm -rf node_modules", minutesAgo: 10 },
-		{ kind: "tool", agent: "claude-9", detail: "ran type check", minutesAgo: 11 },
-		{ kind: "approved", agent: "claude-9", detail: "edit a file", minutesAgo: 12 },
-		{ kind: "yolo", agent: "opencode-4", detail: "lockhaven", minutesAgo: 14 },
-		{ kind: "started", agent: "opencode-4", detail: "lockhaven", minutesAgo: 15 },
-		{ kind: "completed", agent: "claude-3", detail: "gg", minutesAgo: 18 },
-		{ kind: "tool", agent: "claude-3", detail: "ran cargo build", minutesAgo: 20 },
-		{ kind: "started", agent: "claude-3", detail: "gg", minutesAgo: 32 },
+		{
+			source: "cc",
+			event: "tool_use",
+			detail: "Bash (npm test)",
+			minutesAgo: 0,
+		},
+		{
+			source: "oc",
+			event: "approved",
+			detail: "Bash (git status)",
+			minutesAgo: 1,
+		},
+		{
+			source: "oc",
+			event: "permission",
+			detail: "Edit (api.ts)",
+			minutesAgo: 1,
+		},
+		{
+			source: "cc",
+			event: "tool_use",
+			detail: "Edit (api.ts)",
+			minutesAgo: 2,
+		},
+		{
+			source: "cc",
+			event: "plan",
+			detail: "entered plan mode",
+			minutesAgo: 3,
+		},
+		{
+			source: "jg",
+			event: "startup",
+			detail: "claude-12 on api-server",
+			minutesAgo: 5,
+		},
+		{
+			source: "oc",
+			event: "error",
+			detail: "Bash (npm run build)",
+			minutesAgo: 6,
+		},
+		{
+			source: "jg",
+			event: "idle",
+			detail: "claude-9 finished jagman",
+			minutesAgo: 8,
+		},
+		{
+			source: "oc",
+			event: "denied",
+			detail: "Bash (rm -rf node_modules)",
+			minutesAgo: 10,
+		},
+		{
+			source: "cc",
+			event: "tool_use",
+			detail: "Bash (npm run check)",
+			minutesAgo: 11,
+		},
+		{
+			source: "cc",
+			event: "approved",
+			detail: "Edit (auth.ts)",
+			minutesAgo: 12,
+		},
+		{
+			source: "oc",
+			event: "yolo",
+			detail: "entered yolo mode",
+			minutesAgo: 14,
+		},
+		{
+			source: "jg",
+			event: "startup",
+			detail: "opencode-4 on lockhaven",
+			minutesAgo: 15,
+		},
+		{
+			source: "jg",
+			event: "idle",
+			detail: "claude-3 finished gg",
+			minutesAgo: 18,
+		},
+		{
+			source: "cc",
+			event: "tool_use",
+			detail: "Bash (cargo build)",
+			minutesAgo: 20,
+		},
+		{
+			source: "jg",
+			event: "startup",
+			detail: "claude-3 on gg",
+			minutesAgo: 32,
+		},
+		{
+			source: "jg",
+			event: "startup",
+			detail: "claude-3 on gg",
+			minutesAgo: 32,
+		},
+
+		{
+			source: "jg",
+			event: "startup",
+			detail: "claude-3 on gg",
+			minutesAgo: 32,
+		},
+
+		{
+			source: "jg",
+			event: "startup",
+			detail: "claude-3 on gg",
+			minutesAgo: 32,
+		},
+
+		{
+			source: "jg",
+			event: "startup",
+			detail: "claude-3 on gg",
+			minutesAgo: 32,
+		},
+		{
+			source: "jg",
+			event: "startup",
+			detail: "claude-3 on gg",
+			minutesAgo: 32,
+		},
+
+		{
+			source: "jg",
+			event: "startup",
+			detail: "claude-3 on gg",
+			minutesAgo: 32,
+		},
+
+		{
+			source: "jg",
+			event: "startup",
+			detail: "claude-3 on gg",
+			minutesAgo: 32,
+		},
 	];
 
-	const kindVerb: Record<ActivityKind, string> = {
-		started: "started on",
-		completed: "finished",
-		permission: "asking to",
-		approved: "approved:",
-		denied: "denied:",
-		tool: "",
-		error: "error:",
-		plan: "plan mode on",
-		yolo: "yolo mode on",
-	};
-
-	const kindColor: Record<ActivityKind, string> = {
-		started: "var(--ctp-green)",
-		completed: "var(--ctp-overlay1)",
-		permission: "var(--ctp-yellow)",
-		approved: "var(--ctp-green)",
-		denied: "var(--ctp-red)",
-		tool: "var(--ctp-sapphire)",
-		error: "var(--ctp-red)",
-		plan: "var(--ctp-blue)",
-		yolo: "var(--ctp-red)",
-	};
+	const sourceIcons: Record<ActivitySource, { light: string; dark: string }> =
+		{
+			...brandIcons,
+			jg: { light: jgLight, dark: jgDark },
+		};
 
 	function formatTime(minutesAgo: number): string {
 		if (minutesAgo === 0) return "now";
@@ -61,19 +174,25 @@
 </script>
 
 <div class="sidebar">
-	<div class="header">Activity</div>
 	<div class="feed" use:overflowing>
-		{#each mockActivity as entry}
+		{#each mockActivity as entry, i (i)}
 			<div class="entry">
-				<div class="entry-top">
-					<span class="dot" style:background={kindColor[entry.kind]}></span>
-					<span class="agent">{entry.agent}</span>
-					<span class="time">{formatTime(entry.minutesAgo)}</span>
-				</div>
-				<div class="entry-detail">
-					<span class="verb">{kindVerb[entry.kind]}</span>
+				<picture class="icon">
+					<source
+						srcset={sourceIcons[entry.source].dark}
+						media="(prefers-color-scheme: dark)" />
+					<img
+						src={sourceIcons[entry.source].light}
+						alt={entry.source}
+						width="16"
+						height="16" />
+				</picture>
+				<EventHeader>{entry.event}</EventHeader>
+				<span class="detail">
+					{formatTime(entry.minutesAgo)}
+					&middot;
 					{entry.detail}
-				</div>
+				</span>
 			</div>
 		{/each}
 	</div>
@@ -85,15 +204,7 @@
 		flex-direction: column;
 		padding: 16px 0;
 		gap: 8px;
-		min-height: 0;
-	}
-
-	.header {
-		font-family: var(--ff-industrial);
-		font-size: 11px;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		color: var(--ctp-overlay2);
+		overflow: hidden;
 	}
 
 	.feed {
@@ -104,7 +215,9 @@
 		min-height: 0;
 
 		scrollbar-width: none;
-		&::-webkit-scrollbar { display: none; }
+		&::-webkit-scrollbar {
+			display: none;
+		}
 
 		&:global([data-overflowing]) {
 			mask-image: linear-gradient(
@@ -116,49 +229,26 @@
 	}
 
 	.entry {
-		display: flex;
-		flex-direction: column;
+		display: grid;
+		grid-template-columns: 20px 1fr;
+		grid-template-rows: auto auto;
 		gap: 2px;
 	}
 
-	.entry-top {
+	.icon {
+		grid-row: 1;
+		grid-column: 1;
 		display: flex;
 		align-items: center;
-		gap: 4px;
 	}
 
-	.dot {
-		width: 8px;
-		height: 8px;
-		border-radius: 8px;
-		flex-shrink: 0;
-	}
+	.detail {
+		grid-area: 2/1/3/3;
 
-	.agent {
-		font-family: var(--ff-code);
-		font-size: 11px;
-		color: var(--ctp-text);
-		flex: 1;
+		font-size: var(--fs-content);
+
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-	}
-
-	.time {
-		font-family: var(--ff-code);
-		font-size: 11px;
-		color: var(--ctp-overlay1);
-		flex-shrink: 0;
-	}
-
-	.entry-detail {
-		font-family: var(--ff-ui);
-		font-size: 11px;
-		color: var(--ctp-subtext0);
-		padding-left: 12px;
-	}
-
-	.verb {
-		color: var(--ctp-subtext1);
 	}
 </style>

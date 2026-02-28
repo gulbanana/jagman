@@ -416,11 +416,11 @@
     }
 
     .mock-btn {
-        padding: 4px 16px;
+        padding: 2px 16px 4px 16px;
         border: none;
         border-radius: 4px;
         font-family: var(--ff-ui);
-        font-size: 13px;
+        /* font-size: 13px; */
         font-weight: 600;
         cursor: pointer;
     }

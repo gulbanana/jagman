@@ -28,6 +28,10 @@
 		display: grid;
 		grid-template-columns: 128px 1fr 128px;
 		overflow: hidden;
+
+		& > * {
+			overflow: hidden;
+		}
 	}
 
 	.left,
@@ -35,7 +39,8 @@
 		background: var(--ctp-mantle);
 		border-color: var(--ctp-overlay0);
 		border-style: solid;
-		padding: 16px 8px 0 8px;
+		padding: 16px 8px;
+		display: flex;
 	}
 
 	.left {
@@ -53,7 +58,6 @@
 
 		display: flex;
 		flex-direction: column;
-		overflow: hidden;
 	}
 
 	@media (max-width: 1919px) {

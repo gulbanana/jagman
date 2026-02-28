@@ -1,8 +1,6 @@
 - switch to released gg
 - wide + concertina cards
 - real stream sidebar (incl. loglike)
-- stream sidebar style
-- select & enforce consistent typography
 - card: prompt + changelist
 - copilot cli support
 - state.ts

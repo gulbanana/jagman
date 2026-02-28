@@ -1,7 +1,10 @@
 <script lang="ts">
 	import type { LogEntry, ToolUseEntry } from "$lib/messages";
 
-	let { log }: { log: LogEntry[] } = $props();
+	let {
+		log,
+		truncateUser = false,
+	}: { log: LogEntry[]; truncateUser?: boolean } = $props();
 
 	function formatToolUse(entry: ToolUseEntry): string {
 		const args = entry.args;
@@ -32,7 +35,7 @@
 <div class="log">
 	{#each log as entry, i (i)}
 		{#if entry.type === "user"}
-			<div class="log-line user">{entry.text}</div>
+			<div class="log-line user" class:truncateUser>{entry.text}</div>
 		{:else if entry.type === "assistant"}
 			<div class="log-line assistant">
 				<span class="dot dot-assistant"></span>
@@ -55,8 +58,8 @@
 
 <style>
 	.log {
-		font-family: var(--ff-code);
-		font-size: 12px;
+		font-family: var(--ff-code); /* output from a TUI */
+		font-size: var(--fs-content);
 		display: flex;
 		flex-direction: column;
 		gap: 2px;
@@ -76,6 +79,11 @@
 		display: block;
 		background: var(--ctp-text);
 		color: var(--ctp-crust);
+	}
+
+	.user.truncateUser {
+		white-space: nowrap;
+		overflow: hidden;
 	}
 
 	.assistant {
