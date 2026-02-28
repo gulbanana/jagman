@@ -9,6 +9,7 @@
     import RepoColumn from "./RepoColumn.svelte";
     import RepoCard from "./RepoCard.svelte";
     import AgentCard from "./AgentCard.svelte";
+    import ControlButton from "$lib/ControlButton.svelte";
     import ErrorSpan from "$lib/ErrorSpan.svelte";
 
     type Selection =
@@ -83,9 +84,8 @@
                     description="~/projects/api-server">
                     <pre class="mock-command">npm test</pre>
                     <div class="mock-actions">
-                        <button class="mock-btn mock-btn-approve"
-                            >Approve</button>
-                        <button class="mock-btn mock-btn-deny">Deny</button>
+                        <ControlButton intent="approve">Approve</ControlButton>
+                        <ControlButton intent="deny">Deny</ControlButton>
                     </div>
                 </AttentionCard>
             {:else if card.type === "permission-edit"}
@@ -98,9 +98,8 @@
 <span class="mock-diff-del">- const timeout = 5000;</span>
 <span class="mock-diff-add">+ const timeout = 30000;</span></pre>
                     <div class="mock-actions">
-                        <button class="mock-btn mock-btn-approve"
-                            >Approve</button>
-                        <button class="mock-btn mock-btn-deny">Deny</button>
+                        <ControlButton intent="approve">Approve</ControlButton>
+                        <ControlButton intent="deny">Deny</ControlButton>
                     </div>
                 </AttentionCard>
             {:else if card.type === "prompt"}
@@ -113,8 +112,7 @@
                         placeholder="Enter a prompt for the agent..."
                         >Add rate limiting to public endpoints</textarea>
                     <div class="mock-actions">
-                        <button class="mock-btn mock-btn-approve"
-                            >Launch</button>
+                        <ControlButton intent="approve">Launch</ControlButton>
                     </div>
                 </AttentionCard>
             {:else if card.type === "review"}
@@ -144,9 +142,8 @@
                         </div>
                     </div>
                     <div class="mock-actions">
-                        <button class="mock-btn mock-btn-approve"
-                            >Accept</button>
-                        <button class="mock-btn mock-btn-deny">Reject</button>
+                        <ControlButton intent="approve">Accept</ControlButton>
+                        <ControlButton intent="deny">Reject</ControlButton>
                     </div>
                 </AttentionCard>
             {/if}
@@ -415,23 +412,4 @@
         margin-top: 8px;
     }
 
-    .mock-btn {
-        padding: 2px 16px 4px 16px;
-        border: none;
-        border-radius: 4px;
-        font-family: var(--ff-ui);
-        /* font-size: 13px; */
-        font-weight: 600;
-        cursor: pointer;
-    }
-
-    .mock-btn-approve {
-        background: var(--ctp-green);
-        color: var(--ctp-base);
-    }
-
-    .mock-btn-deny {
-        background: var(--ctp-surface1);
-        color: var(--ctp-text);
-    }
 </style>
