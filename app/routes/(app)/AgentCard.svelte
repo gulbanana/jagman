@@ -2,14 +2,18 @@
 	import Pane from "$lib/Pane.svelte";
 	import LogView from "$lib/LogView.svelte";
 	import { brandIcons, brandNames } from "$lib/brands";
-	import type { AssistantEntry, RepoSession, UserEntry } from "$lib/messages";
+	import type {
+		AssistantEntry,
+		RepoSessionSummary,
+		UserEntry,
+	} from "$lib/messages";
 
 	let {
 		session,
 		selected = false,
 		onclick,
 	}: {
-		session: RepoSession;
+		session: RepoSessionSummary;
 		selected?: boolean;
 		onclick: () => void;
 	} = $props();

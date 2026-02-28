@@ -2,7 +2,7 @@ import { exec, execFile } from 'node:child_process';
 import { readdir, readFile, readlink } from 'node:fs/promises';
 import { basename, normalize } from 'node:path';
 import { platform } from 'node:os';
-import type { AgentRepoSession } from './agent';
+import type { AgentRepoSessionSummary } from '$lib/messages';
 
 export type AgentProcess = {
 	name: string;
@@ -71,10 +71,10 @@ export function getWorkspacesWithAgent(
  * are handled correctly.
  */
 export function markExternalSessions(
-	sessions: AgentRepoSession[],
+	sessions: AgentRepoSessionSummary[],
 	activeWorkspaces: Set<string>
 ): void {
-	const byWorkspace = new Map<string, AgentRepoSession[]>();
+	const byWorkspace = new Map<string, AgentRepoSessionSummary[]>();
 	for (const session of sessions) {
 		const key = session.workspace.toLowerCase();
 		let list = byWorkspace.get(key);
@@ -88,7 +88,7 @@ export function markExternalSessions(
 	for (const [workspace, workspaceSessions] of byWorkspace) {
 		if (!activeWorkspaces.has(workspace)) continue;
 
-		let mostRecent: AgentRepoSession | null = null;
+		let mostRecent: AgentRepoSessionSummary | null = null;
 		for (const s of workspaceSessions) {
 			if (s.status !== 'inactive') continue;
 			if (!mostRecent || s.timestamp > mostRecent.timestamp) {

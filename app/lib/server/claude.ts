@@ -1,9 +1,9 @@
 import { readdir, stat } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import type { Agent, AgentRepo, AgentRepoSession } from './agent';
+import type { Agent } from './agent';
 import type { AgentBrand } from '../brands';
-import type { AgentSession, LogEntry } from '../messages';
+import type { AgentDetail, AgentRepoSummary, AgentRepoSessionSummary, LogEntry } from '../messages';
 import { buildLastEntries } from './last-entries';
 import {
 	readFirstUserRecord,
@@ -115,7 +115,7 @@ async function readProjectSessions(
 	projectDirName: string,
 	workspace: string,
 	maxSessions: number
-): Promise<{ sessions: AgentRepoSession[]; branch: string }> {
+): Promise<{ sessions: AgentRepoSessionSummary[]; branch: string }> {
 	const projectPath = join(PROJECTS_DIR, projectDirName);
 
 	let allEntries: string[];
@@ -167,7 +167,7 @@ async function readProjectSessions(
 
 	const branch = sessionHeaders[0]?.gitBranch ?? '';
 
-	const sessions: AgentRepoSession[] = sessionHeaders.map((session) => ({
+	const sessions: AgentRepoSessionSummary[] = sessionHeaders.map((session) => ({
 		id: session.sessionId,
 		workspace,
 		status: 'inactive' as const,
@@ -217,7 +217,7 @@ async function findSessionFile(sessionId: string): Promise<string | null> {
 export default class ClaudeAgent implements Agent {
 	brand: AgentBrand = 'cc';
 
-	async loadRepos(repoPaths: string[], maxSessions: number): Promise<AgentRepo[]> {
+	async loadRepos(repoPaths: string[], maxSessions: number): Promise<AgentRepoSummary[]> {
 		const index = await getProjectIndex();
 
 		const repos = await Promise.all(
@@ -243,7 +243,7 @@ export default class ClaudeAgent implements Agent {
 		return repos;
 	}
 
-	async loadSession(id: string): Promise<Omit<AgentSession, 'brand'> | null> {
+	async loadSession(id: string): Promise<Omit<AgentDetail, 'brand'> | null> {
 		const filePath = await findSessionFile(id);
 		if (!filePath) return null;
 

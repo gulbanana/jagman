@@ -1,24 +1,15 @@
 import { homedir } from 'node:os';
 import type { AgentBrand } from "../brands";
-import type { Repo, RepoError, RepoSession, AgentSession } from "../messages";
+import type { AgentDetail, AgentRepoSummary, RepoSessionSummary, RepoError, RepoSummary, } from "../messages";
 import { REPO_PATHS } from "./config";
 import { ActiveOrder, activeFirstCompare } from "./active-order";
 import ClaudeAgent from "./claude";
 import OpenCodeAgent from "./opencode";
 
-export type AgentRepoSession = Omit<RepoSession, 'brand'>;
-
-
-export type AgentRepo = {
-    path: string;
-    branch: string;
-    sessions: AgentRepoSession[];
-};
-
 export interface Agent {
     brand: AgentBrand;
-    loadRepos(repoPaths: string[], maxSessions: number): Promise<AgentRepo[]>;
-    loadSession(id: string): Promise<Omit<AgentSession, 'brand'> | null>;
+    loadRepos(repoPaths: string[], maxSessions: number): Promise<AgentRepoSummary[]>;
+    loadSession(id: string): Promise<Omit<AgentDetail, 'brand'> | null>;
 }
 
 let wellKnownAgents = [new ClaudeAgent(), new OpenCodeAgent()];
@@ -39,13 +30,13 @@ function toDisplayPath(path: string): string {
     return path;
 }
 
-export async function getAllRepos(): Promise<Repo[]> {
+export async function getAllRepos(): Promise<RepoSummary[]> {
     // Collect branded sessions grouped by repo path (case-insensitive)
-    const repoMap = new Map<string, { path: string; branch: string; sessions: RepoSession[]; errors: RepoError[] }>();
+    const repoMap = new Map<string, { path: string; branch: string; sessions: RepoSessionSummary[]; errors: RepoError[] }>();
     const agentErrors: RepoError[] = [];
 
     for (const agent of wellKnownAgents) {
-        let agentRepos: AgentRepo[];
+        let agentRepos: AgentRepoSummary[];
         try {
             agentRepos = await agent.loadRepos(REPO_PATHS, 10);
         } catch (error) {
@@ -57,7 +48,7 @@ export async function getAllRepos(): Promise<Repo[]> {
         for (const repo of agentRepos) {
             const key = repo.path.toLowerCase();
             const existing = repoMap.get(key);
-            const brandedSessions = repo.sessions.map((s): RepoSession => ({ ...s, mode: s.status == 'inactive' ? null : s.mode, brand: agent.brand }));
+            const brandedSessions = repo.sessions.map((s): RepoSessionSummary => ({ ...s, mode: s.status == 'inactive' ? null : s.mode, brand: agent.brand }));
 
             if (existing) {
                 existing.sessions.push(...brandedSessions);
@@ -133,7 +124,7 @@ export async function getAllRepos(): Promise<Repo[]> {
     }));
 }
 
-export async function getAgentSession(id: string): Promise<AgentSession | null> {
+export async function loadAgentDetail(id: string): Promise<AgentDetail | null> {
     const results = await Promise.allSettled(
         wellKnownAgents.map((agent) => agent.loadSession(id))
     );

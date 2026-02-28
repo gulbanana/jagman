@@ -1,19 +1,11 @@
 import type { AgentBrand } from "./brands";
 
-export type RepoError = {
-	brand: AgentBrand;
-	message: string;
-};
+/* unbranded single-agent data */
 
-export type Repo = {
-	path: string;
-	branch: string;
-	sessions: RepoSession[];
-	errors: RepoError[];
-};
+export type SessionStatus = "running" | "waiting" | "inactive" | "external";
+export type SessionMode = "standard" | "plan" | "yolo";
 
-export type RepoSession = {
-	brand: AgentBrand,
+export type AgentRepoSessionSummary = {
 	id: string;
 	workspace: string;
 	title: string;
@@ -23,24 +15,51 @@ export type RepoSession = {
 	lastEntries: LogEntry[];
 };
 
-export type SessionStatus = "running" | "waiting" | "inactive" | "external";
+export type AgentRepoSummary = {
+	path: string;
+	branch: string;
+	sessions: AgentRepoSessionSummary[];
+};
 
-export type SessionMode = "standard" | "plan" | "yolo";
+/* branded multi-agent data */
+
+export type RepoError = {
+	brand: AgentBrand;
+	message: string;
+};
+
+export type RepoSessionSummary = AgentRepoSessionSummary & {
+	brand: AgentBrand;
+};
+
+export type RepoSummary = AgentRepoSummary & {
+	sessions: RepoSessionSummary[];
+	errors: RepoError[];
+};
+
+/* unbranded but single-agent log data */
 
 export type UserEntry = { type: 'user'; text: string; timestamp: string };
 export type AssistantEntry = { type: 'assistant'; text: string; timestamp: string };
 export type ToolUseEntry = { type: 'tool_use'; tool: string; args: Map<string, unknown>; success: boolean; timestamp: string };
 export type LogEntry = UserEntry | AssistantEntry | ToolUseEntry;
 
-export type AgentSession = {
+export type AgentDetail = {
 	brand: AgentBrand,
 	id: string;
 	title: string;
 	log: LogEntry[];
 };
 
-export type AttentionCardType = "permission-command" | "permission-edit" | "prompt" | "review";
+/* notification data */
 
-export type AttentionCardData = {
-	type: AttentionCardType;
+export type AttentionType = "permission-command" | "permission-edit" | "review";
+
+export type PromptDetail = {
+	type: "idle-prompt";
+	agent: RepoSessionSummary;
+}
+
+export type AttentionDetail = PromptDetail | {
+	type: AttentionType;
 };

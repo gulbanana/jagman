@@ -1,13 +1,13 @@
 <script lang="ts">
 	import ErrorSpan from "$lib/ErrorSpan.svelte";
 	import Pane from "$lib/Pane.svelte";
-	import type { Repo, SessionMode } from "$lib/messages";
+	import type { RepoSummary, SessionMode } from "$lib/messages";
 
 	let {
 		repo,
 		onclick,
 	}: {
-		repo: Repo;
+		repo: RepoSummary;
 		onclick: () => void;
 	} = $props();
 

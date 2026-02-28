@@ -7,9 +7,9 @@ import type {
 	TextPart as OcTextPart,
 	ToolPart as OcToolPart
 } from '@opencode-ai/sdk';
-import type { Agent, AgentRepo, AgentRepoSession } from './agent';
+import type { Agent } from './agent';
 import type { AgentBrand } from '../brands';
-import type { AgentSession, LogEntry, SessionMode, SessionStatus } from '../messages';
+import type { AgentDetail, AgentRepoSummary, AgentRepoSessionSummary, LogEntry, SessionMode, SessionStatus } from '../messages';
 import { buildLastEntries } from './last-entries';
 import { getAgentProcesses, getWorkspacesWithAgent, markExternalSessions } from './processes';
 
@@ -143,7 +143,7 @@ function toTimestamp(ms: number): string {
 export default class OpenCodeAgent implements Agent {
 	brand: AgentBrand = 'oc';
 
-	async loadRepos(repoPaths: string[], maxSessions: number): Promise<AgentRepo[]> {
+	async loadRepos(repoPaths: string[], maxSessions: number): Promise<AgentRepoSummary[]> {
 		const repos = await Promise.all(repoPaths.map((path) => this.loadRepo(path, maxSessions)));
 
 		const processes = await getAgentProcesses();
@@ -157,7 +157,7 @@ export default class OpenCodeAgent implements Agent {
 		return repos;
 	}
 
-	private async loadRepo(repoPath: string, maxSessions: number): Promise<AgentRepo> {
+	private async loadRepo(repoPath: string, maxSessions: number): Promise<AgentRepoSummary> {
 		const client = await getClient(repoPath);
 
 		const [sessionsList, statusMap, vcsInfo] = await Promise.all([
@@ -193,7 +193,7 @@ export default class OpenCodeAgent implements Agent {
 		session: OcSession,
 		statusMap: Record<string, OcSessionStatus>,
 		repoPath: string
-	): Promise<AgentRepoSession> {
+	): Promise<AgentRepoSessionSummary> {
 		sessionRepoCache.set(session.id, repoPath);
 
 		const result = await client.session.messages({
@@ -259,7 +259,7 @@ export default class OpenCodeAgent implements Agent {
 
 	async loadSession(
 		id: string
-	): Promise<Omit<AgentSession, 'brand'> | null> {
+	): Promise<Omit<AgentDetail, 'brand'> | null> {
 		const repoPath = sessionRepoCache.get(id);
 		if (repoPath) {
 			return this.fetchSession(id, repoPath);
@@ -275,7 +275,7 @@ export default class OpenCodeAgent implements Agent {
 	private async fetchSession(
 		id: string,
 		directory: string
-	): Promise<Omit<AgentSession, 'brand'> | null> {
+	): Promise<Omit<AgentDetail, 'brand'> | null> {
 		const client = await getClient(directory);
 
 		const [sessionResult, messagesResult] = await Promise.all([

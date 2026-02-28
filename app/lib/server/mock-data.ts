@@ -1,8 +1,8 @@
-import type { AttentionCardData } from '$lib/messages';
+import type { AttentionDetail } from '$lib/messages';
 
-export const mockAttentionCards: AttentionCardData[] = [
+export const mockAttentionCards: AttentionDetail[] = [
 	{ type: "permission-command" },
 	{ type: "permission-edit" },
-	{ type: "prompt" },
+	{ type: "idle-prompt", agent: { brand: "cc", id: "mock-idle", workspace: "default", title: "Idle agent", status: "waiting", mode: null, timestamp: Date.now(), lastEntries: [] } },
 	{ type: "review" },
 ];

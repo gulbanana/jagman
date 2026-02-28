@@ -102,7 +102,7 @@
                         <ControlButton intent="deny">Deny</ControlButton>
                     </div>
                 </AttentionCard>
-            {:else if card.type === "prompt"}
+            {:else if card.type === "idle-prompt"}
                 <AttentionCard
                     kind="Prompt"
                     title="New task for api-server"
@@ -411,5 +411,4 @@
         gap: 8px;
         margin-top: 8px;
     }
-
 </style>
