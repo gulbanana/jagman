@@ -12,6 +12,7 @@ export default defineConfig({
 		{
 			name: 'externalize-libgg',
 			enforce: 'pre',
+			apply: 'build',
 			resolveId(source) {
 				if (source === 'libgg') {
 					return { id: 'libgg', external: true };
