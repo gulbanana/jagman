@@ -124,7 +124,7 @@ JAGMAN uses **Drizzle ORM** with **better-sqlite3** for local persistence. The s
 - `npm run db:migrate` — apply pending migrations
 - `npm run db:studio` — open Drizzle Studio for browsing data
 
-Configuration is in `drizzle.config.ts`. The database URL defaults to `local.db` (set via `DATABASE_URL` in `.env`).
+Configuration is in `drizzle.config.ts`. The database path is resolved from the user config directory via `env-paths` (for example `~/.config/jagman/db.etilqs` on Linux).
 
 ## Design System
 

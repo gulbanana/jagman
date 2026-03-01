@@ -85,6 +85,7 @@
 		"@catppuccin/palette": "^1.7.1",
 		"@opencode-ai/sdk": "^1.2.10",
 		"better-sqlite3": "^12.6.2",
+		"env-paths": "^4.0.0",
 		"feather-icons": "^4.29.2",
 		"libgg": "file:native",
 		"modern-normalize": "^3.0.1"

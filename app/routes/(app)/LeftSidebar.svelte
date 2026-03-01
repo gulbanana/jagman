@@ -6,7 +6,6 @@
 <ul class="menu">
     <li><a href="/"><Icon name="home" /> Dashboard</a></li>
     <li><a href="/settings"><Icon name="settings" /> Settings</a></li>
-    <li><a href="/widgets"><Icon name="package" /> Widgets</a></li>
     <li><Logo /></li>
 </ul>
 

@@ -1,11 +1,12 @@
 import { defineConfig } from 'drizzle-kit';
+import { ensureJagmanConfigDir, JAGMAN_DB_PATH } from './app/lib/server/paths';
 
-if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is not set');
+ensureJagmanConfigDir();
 
 export default defineConfig({
 	schema: './app/lib/server/db/schema.ts',
 	dialect: 'sqlite',
-	dbCredentials: { url: process.env.DATABASE_URL },
+	dbCredentials: { url: JAGMAN_DB_PATH },
 	verbose: true,
 	strict: true
 });

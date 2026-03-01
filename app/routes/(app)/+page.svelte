@@ -233,7 +233,7 @@
 
     .bottom {
         display: grid;
-        grid-template-columns: auto minmax(512px, 1fr);
+        grid-template-columns: auto minmax(512px, 50%);
         min-height: 0;
     }
 

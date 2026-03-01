@@ -1,10 +1,10 @@
 import { homedir } from 'node:os';
 import type { AgentBrand } from "../brands";
 import type { AgentDetail, AgentRepoSummary, RepoSessionSummary, RepoError, RepoSummary, } from "../messages";
-import { REPO_PATHS } from "./config";
 import { ActiveOrder, activeFirstCompare } from "./active-order";
 import ClaudeAgent from "./claude";
 import OpenCodeAgent from "./opencode";
+import { listRepositories } from "./db/repository";
 
 export interface Agent {
     brand: AgentBrand;
@@ -31,6 +31,8 @@ function toDisplayPath(path: string): string {
 }
 
 export async function getAllRepos(): Promise<RepoSummary[]> {
+    const repoPaths = listRepositories().map((repo) => repo.path);
+
     // Collect branded sessions grouped by repo path (case-insensitive)
     const repoMap = new Map<string, { path: string; branch: string; sessions: RepoSessionSummary[]; errors: RepoError[] }>();
     const agentErrors: RepoError[] = [];
@@ -38,7 +40,7 @@ export async function getAllRepos(): Promise<RepoSummary[]> {
     for (const agent of wellKnownAgents) {
         let agentRepos: AgentRepoSummary[];
         try {
-            agentRepos = await agent.loadRepos(REPO_PATHS, 10);
+            agentRepos = await agent.loadRepos(repoPaths, 10);
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
             agentErrors.push({ brand: agent.brand, message });
@@ -68,7 +70,7 @@ export async function getAllRepos(): Promise<RepoSummary[]> {
     }
 
     // Ensure every configured repo path has an entry, even if all agents failed
-    for (const repoPath of REPO_PATHS) {
+    for (const repoPath of repoPaths) {
         const key = repoPath.toLowerCase();
         if (!repoMap.has(key)) {
             repoMap.set(key, {
