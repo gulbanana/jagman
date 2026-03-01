@@ -1,164 +1,11 @@
 <script lang="ts">
 	import { overflowing } from "$lib/overflowing";
-	import { brandIcons, type AgentBrand } from "$lib/brands";
+	import { brandIcons } from "$lib/brands";
+	import type { ActivitySource } from "$lib/activity";
 	import jgLight from "$lib/assets/jg-light.svg";
 	import jgDark from "$lib/assets/jg-dark.svg";
 	import EventHeader from "$lib/EventHeader.svelte";
-
-	type ActivitySource = AgentBrand | "jg";
-
-	type ActivityEntry = {
-		source: ActivitySource;
-		event: string;
-		detail: string;
-		minutesAgo: number;
-	};
-
-	const mockActivity: ActivityEntry[] = [
-		{
-			source: "cc",
-			event: "tool_use",
-			detail: "Bash (npm test)",
-			minutesAgo: 0,
-		},
-		{
-			source: "oc",
-			event: "approved",
-			detail: "Bash (git status)",
-			minutesAgo: 1,
-		},
-		{
-			source: "oc",
-			event: "permission",
-			detail: "Edit (api.ts)",
-			minutesAgo: 1,
-		},
-		{
-			source: "cc",
-			event: "tool_use",
-			detail: "Edit (api.ts)",
-			minutesAgo: 2,
-		},
-		{
-			source: "cc",
-			event: "plan",
-			detail: "entered plan mode",
-			minutesAgo: 3,
-		},
-		{
-			source: "jg",
-			event: "startup",
-			detail: "claude-12 on api-server",
-			minutesAgo: 5,
-		},
-		{
-			source: "oc",
-			event: "error",
-			detail: "Bash (npm run build)",
-			minutesAgo: 6,
-		},
-		{
-			source: "jg",
-			event: "idle",
-			detail: "claude-9 finished jagman",
-			minutesAgo: 8,
-		},
-		{
-			source: "oc",
-			event: "denied",
-			detail: "Bash (rm -rf node_modules)",
-			minutesAgo: 10,
-		},
-		{
-			source: "cc",
-			event: "tool_use",
-			detail: "Bash (npm run check)",
-			minutesAgo: 11,
-		},
-		{
-			source: "cc",
-			event: "approved",
-			detail: "Edit (auth.ts)",
-			minutesAgo: 12,
-		},
-		{
-			source: "oc",
-			event: "yolo",
-			detail: "entered yolo mode",
-			minutesAgo: 14,
-		},
-		{
-			source: "jg",
-			event: "startup",
-			detail: "opencode-4 on lockhaven",
-			minutesAgo: 15,
-		},
-		{
-			source: "jg",
-			event: "idle",
-			detail: "claude-3 finished gg",
-			minutesAgo: 18,
-		},
-		{
-			source: "cc",
-			event: "tool_use",
-			detail: "Bash (cargo build)",
-			minutesAgo: 20,
-		},
-		{
-			source: "jg",
-			event: "startup",
-			detail: "claude-3 on gg",
-			minutesAgo: 32,
-		},
-		{
-			source: "jg",
-			event: "startup",
-			detail: "claude-3 on gg",
-			minutesAgo: 32,
-		},
-
-		{
-			source: "jg",
-			event: "startup",
-			detail: "claude-3 on gg",
-			minutesAgo: 32,
-		},
-
-		{
-			source: "jg",
-			event: "startup",
-			detail: "claude-3 on gg",
-			minutesAgo: 32,
-		},
-
-		{
-			source: "jg",
-			event: "startup",
-			detail: "claude-3 on gg",
-			minutesAgo: 32,
-		},
-		{
-			source: "jg",
-			event: "startup",
-			detail: "claude-3 on gg",
-			minutesAgo: 32,
-		},
-
-		{
-			source: "jg",
-			event: "startup",
-			detail: "claude-3 on gg",
-			minutesAgo: 32,
-		},
-
-		{
-			source: "jg",
-			event: "startup",
-			detail: "claude-3 on gg",
-			minutesAgo: 32,
-		},
-	];
+	import { getActivity } from "./data.remote";
 
 	const sourceIcons: Record<ActivitySource, { light: string; dark: string }> =
 		{
@@ -166,8 +13,23 @@
 			jg: { light: jgLight, dark: jgDark },
 		};
 
-	function formatTime(minutesAgo: number): string {
-		if (minutesAgo === 0) return "now";
+	const entries = $derived(await getActivity());
+
+	$effect(() => {
+		const source = new EventSource("/activity");
+
+		source.addEventListener("activity", () => {
+			getActivity().refresh();
+		});
+
+		return () => {
+			source.close();
+		};
+	});
+
+	function formatTime(timestamp: number): string {
+		const minutesAgo = Math.floor((Date.now() - timestamp) / 60_000);
+		if (minutesAgo <= 0) return "now";
 		if (minutesAgo < 60) return `${minutesAgo}m`;
 		return `${Math.floor(minutesAgo / 60)}h`;
 	}
@@ -175,7 +37,7 @@
 
 <div class="sidebar">
 	<div class="feed" use:overflowing>
-		{#each mockActivity as entry, i (i)}
+		{#each entries as entry (entry.timestamp)}
 			<div class="entry">
 				<picture class="icon">
 					<source
@@ -189,7 +51,7 @@
 				</picture>
 				<EventHeader>{entry.event}</EventHeader>
 				<span class="detail">
-					{formatTime(entry.minutesAgo)}
+					{formatTime(entry.timestamp)}
 					&middot;
 					{entry.detail}
 				</span>

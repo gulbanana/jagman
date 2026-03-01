@@ -28,7 +28,19 @@
 	</div>
 
 	<div class="right">
-		<RightSidebar />
+		<svelte:boundary>
+			<RightSidebar />
+			{#snippet pending()}
+				<div class="status-message">Loading...</div>
+			{/snippet}
+			{#snippet failed(error)}
+				<div class="status-message">
+					<ErrorSpan>
+						{error instanceof Error ? error.message : error}
+					</ErrorSpan>
+				</div>
+			{/snippet}
+		</svelte:boundary>
 	</div>
 </div>
 
