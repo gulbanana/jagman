@@ -93,7 +93,7 @@ jobs:
     if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/release'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       id-token: write
     steps:
       - uses: actions/checkout@v4
@@ -146,3 +146,10 @@ jobs:
       - name: Publish main package
         if: github.ref == 'refs/heads/release'
         run: npm publish --access public --provenance --ignore-scripts
+
+      - name: Tag release
+        if: github.ref == 'refs/heads/release'
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          git tag "v$VERSION"
+          git push origin "v$VERSION"
