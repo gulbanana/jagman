@@ -29,7 +29,7 @@ Each agent runs in its own **Jujutsu workspace** — a separate directory with i
 - Agent work is tracked as ordinary jj commits, visible in the repo's history
 - No branch management is needed — jj's branchless workflow handles isolation naturally
 
-JAGMAN embeds [**GG**](https://github.com/gulbanana/gg) as a native library for Jujutsu operations. GG is a sister project (source at `../gg`) that provides both a desktop GUI and a web server for JJ repositories. JAGMAN uses GG's worker, config, and message types via a Rust NAPI-RS addon. The dashboard's detail pane will also display some of GG's views in iframes.
+JAGMAN embeds [**GG**](https://github.com/gulbanana/gg) as a native library for Jujutsu operations. GG is a sister project ([source nearby](../gg)) that provides both a web GUI and an API for JJ repositories. JAGMAN uses GG's worker, config, and message types via a Rust NAPI-RS addon. The dashboard displays some of GG's views in iframes.
 
 ### Persistence
 

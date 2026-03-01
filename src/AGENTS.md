@@ -6,7 +6,7 @@ JAGMAN includes a Rust NAPI-RS crate that embeds the GG project as a native Node
 
 Rust source lives in `src/`, TypeScript source in `app/`:
 
-- `Cargo.toml` — defines the `libgg` crate (`cdylib`) with a path dependency on `gg-cli` (`../gg`)
+- `Cargo.toml` — defines the `libgg` crate (`cdylib`) with a dependency on `gg-cli` from crates.io
 - `build.rs` — calls `napi_build::setup()`
 - `src/lib.rs` — `#[napi]` functions that wrap GG's Rust APIs for Node.js
 - `app/lib/server/gg.ts` — TypeScript re-export of the generated bindings (server-only)
@@ -14,7 +14,7 @@ Rust source lives in `src/`, TypeScript source in `app/`:
 
 ## GG Dependency
 
-The `gg-cli` crate (source at `../gg`) is currently referenced by path with default features, which include Tauri. GG's `tauri::generate_context!()` macro embeds pre-built frontend assets at compile time. When using the path dependency, these assets must exist in `../gg/dist/` — if missing, run `npm run build` in the GG directory. Once `gg-cli` is consumed from crates.io instead, the published crate includes the assets and no local build step is needed. GG's source may need to be consulted when extending the NAPI bridge or debugging build issues.
+The `gg-cli` crate is consumed from crates.io with default features, which include Tauri. GG's `tauri::generate_context!()` macro embeds pre-built frontend assets at compile time; the published crate includes these assets, so no local build step is needed. GG's source (at `../gg`) may be consulted when extending the NAPI bridge or debugging build issues.
 
 ## Build Process
 

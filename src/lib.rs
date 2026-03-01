@@ -45,8 +45,8 @@ pub async fn start_gg_web(path: String) -> napi::Result<u16> {
     }
 
     // Create the GG app (sync — sets up worker thread and router)
-    let options = gg_cli::RunOptions::new(PathBuf::from(&path));
-    let (app, gg_shutdown_rx) = gg_cli::web::create_app(options, None)
+    let options = gg_lib::RunOptions::new(PathBuf::from(&path));
+    let (app, gg_shutdown_rx) = gg_lib::web::create_app(options, None)
         .map_err(|e| napi::Error::from_reason(format!("Failed to create GG app: {e}")))?;
 
     // Bind to a random available port

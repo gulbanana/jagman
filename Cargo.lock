@@ -1841,6 +1841,8 @@ dependencies = [
 [[package]]
 name = "gg-cli"
 version = "0.38.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6d7fd890db2c0a916f8272c51a33bc47a67d0956ab37140a67180e769a18b97f"
 dependencies = [
  "anyhow",
  "async-trait",
