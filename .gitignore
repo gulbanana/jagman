@@ -34,3 +34,5 @@ test-results/
 /index.js
 /index.d.ts
 /target/
+# SQLite
+*.db

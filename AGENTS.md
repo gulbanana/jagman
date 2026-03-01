@@ -42,7 +42,7 @@ Session history, agent configuration, and other state are stored in a local **SQ
 - **SvelteKit** (Svelte 5) — serves both the UI and the server-side API in a single process
 - **TypeScript** throughout
 - **Rust** via NAPI-RS — native addon embedding GG for Jujutsu operations
-- **SQLite** for persistence
+- **SQLite** via Drizzle ORM + better-sqlite3 for persistence
 - **Agent SDKs** (Claude Agent SDK, Opencode SDK) for agent control
 
 ### UI Structure
@@ -112,6 +112,19 @@ To start a new agent session, the user clicks in the agent list (on a repo or a 
 ### Native Addon (`libgg`)
 
 JAGMAN includes a Rust NAPI-RS crate (`src/lib.rs`) that embeds GG as a native Node.js addon, giving server-side TypeScript direct access to Jujutsu operations. The native module can only be imported in server-side code (`app/lib/server/`). See [src/AGENTS.md](src/AGENTS.md) for build process, GG dependency details, and bundler externalisation.
+
+### Database (`app/lib/server/db/`)
+
+JAGMAN uses **Drizzle ORM** with **better-sqlite3** for local persistence. The schema is defined in TypeScript (`app/lib/server/db/schema.ts`) and the database client is exported from `app/lib/server/db/index.ts`. Like `libgg`, the `better-sqlite3` native addon is externalized from Vite's SSR bundle (configured in `vite.config.ts`).
+
+**Schema management** uses Drizzle Kit:
+
+- `npm run db:push` — push schema changes directly to the database (development)
+- `npm run db:generate` — generate SQL migration files from schema diffs
+- `npm run db:migrate` — apply pending migrations
+- `npm run db:studio` — open Drizzle Studio for browsing data
+
+Configuration is in `drizzle.config.ts`. The database URL defaults to `local.db` (set via `DATABASE_URL` in `.env`).
 
 ## Design System
 

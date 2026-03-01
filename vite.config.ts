@@ -21,7 +21,7 @@ export default defineConfig({
 		}
 	],
 	ssr: {
-		external: ['libgg']
+		external: ['libgg', 'better-sqlite3']
 	},
 	test: {
 		expect: { requireAssertions: true },

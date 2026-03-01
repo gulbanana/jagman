@@ -55,7 +55,11 @@
 		"test:unit": "vitest",
 		"test": "npm run test:unit -- --run && npm run test:e2e",
 		"test:e2e": "playwright test",
-		"prepublishOnly": "npm run build"
+		"prepublishOnly": "npm run build",
+		"db:push": "drizzle-kit push",
+		"db:generate": "drizzle-kit generate",
+		"db:migrate": "drizzle-kit migrate",
+		"db:studio": "drizzle-kit studio"
 	},
 	"devDependencies": {
 		"@napi-rs/cli": "^3.0.0",
@@ -63,9 +67,12 @@
 		"@sveltejs/adapter-node": "^5.5.3",
 		"@sveltejs/kit": "^2.50.2",
 		"@sveltejs/vite-plugin-svelte": "^6.2.4",
+		"@types/better-sqlite3": "^7.6.13",
 		"@types/feather-icons": "^4.29.4",
-		"@types/node": "^25.3.0",
+		"@types/node": "^22",
 		"@vitest/browser-playwright": "^4.0.18",
+		"drizzle-kit": "^0.31.8",
+		"drizzle-orm": "^0.45.1",
 		"playwright": "^1.58.1",
 		"svelte": "^5.51.0",
 		"svelte-check": "^4.3.6",
@@ -77,6 +84,7 @@
 	"dependencies": {
 		"@catppuccin/palette": "^1.7.1",
 		"@opencode-ai/sdk": "^1.2.10",
+		"better-sqlite3": "^12.6.2",
 		"feather-icons": "^4.29.2",
 		"libgg": "file:native",
 		"modern-normalize": "^3.0.1"
