@@ -143,27 +143,29 @@ async function readProjectSessions(
 	validFiles.sort((a, b) => b.mtimeMs - a.mtimeMs);
 	const recentFiles = validFiles.slice(0, maxSessions);
 
-	const headers = await Promise.all(
+	// Use the filename stem (without .jsonl) as the session ID, since Claude Code
+	// can create multiple files for the same logical session (continuations carry
+	// the same sessionId but get a new filename).
+	const sessionHeaders = (await Promise.all(
 		recentFiles.map(async ({ file, filePath }): Promise<SessionHeader | null> => {
 			const overview = await readSessionOverview(filePath);
 			if (!overview || !overview.hasContent) return null;
 
-			// Cache the session ID → file path mapping for fast lookups later
-			sessionFileCache.set(overview.sessionId, filePath);
+			const fileId = file.replace(/\.jsonl$/, '');
+
+			// Cache the file ID → file path mapping for fast lookups later
+			sessionFileCache.set(fileId, filePath);
 
 			return {
-				sessionId: overview.sessionId,
-				title: overview.firstUserText ? firstLine(overview.firstUserText) : overview.sessionId,
+				sessionId: fileId,
+				title: overview.firstUserText ? firstLine(overview.firstUserText) : fileId,
 				mode: mapPermissionMode(overview.permissionMode),
 				timestamp: new Date(overview.lastTimestamp).getTime(),
 				gitBranch: overview.gitBranch,
 				lastEntries: buildLastEntries(overview.lastAssistant, overview.lastToolUse, overview.toolResults)
 			};
 		})
-	);
-
-	const sessionHeaders = headers
-		.filter((h): h is SessionHeader => h !== null);
+	)).filter((h): h is SessionHeader => h !== null);
 
 	const branch = sessionHeaders[0]?.gitBranch ?? '';
 
