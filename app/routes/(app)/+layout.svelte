@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ErrorSpan from "$lib/ErrorSpan.svelte";
 	import RightSidebar from "./RightSidebar.svelte";
 	import LeftSidebar from "./LeftSidebar.svelte";
 
@@ -11,7 +12,19 @@
 	</div>
 
 	<div class="center">
-		{@render children()}
+		<svelte:boundary>
+			{@render children()}
+			{#snippet pending()}
+				<div class="status-message">Loading...</div>
+			{/snippet}
+			{#snippet failed(error)}
+				<div class="status-message">
+					<ErrorSpan>
+						{error instanceof Error ? error.message : error}
+					</ErrorSpan>
+				</div>
+			{/snippet}
+		</svelte:boundary>
 	</div>
 
 	<div class="right">
@@ -64,5 +77,14 @@
 		.center {
 			padding: 16px;
 		}
+	}
+
+	.status-message {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-family: var(--ff-ui);
+		color: var(--ctp-subtext0);
 	}
 </style>

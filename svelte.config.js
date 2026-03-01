@@ -3,7 +3,10 @@ import adapter from '@sveltejs/adapter-node';
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
 	compilerOptions: {
-		runes: true
+		runes: true,
+		experimental: {
+			async: true
+		}
 	},
 	kit: {
 		adapter: adapter(),
