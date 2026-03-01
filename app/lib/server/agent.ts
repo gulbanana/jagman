@@ -3,6 +3,7 @@ import type { AgentBrand } from "../brands";
 import type { AgentDetail, AgentRepoSummary, RepoSessionSummary, RepoError, RepoSummary, } from "../messages";
 import { ActiveOrder, activeFirstCompare } from "./active-order";
 import ClaudeAgent from "./claude";
+import CopilotAgent from "./copilot";
 import OpenCodeAgent from "./opencode";
 import { listRepositories } from "./db/repository";
 
@@ -12,7 +13,7 @@ export interface Agent {
     loadSession(id: string): Promise<Omit<AgentDetail, 'brand'> | null>;
 }
 
-let wellKnownAgents = [new ClaudeAgent(), new OpenCodeAgent()];
+let wellKnownAgents = [new ClaudeAgent(), new OpenCodeAgent(), new CopilotAgent()];
 
 const sessionOrder = new ActiveOrder();
 const repoOrder = new ActiveOrder();

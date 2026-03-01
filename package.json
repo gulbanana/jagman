@@ -83,6 +83,7 @@
 	},
 	"dependencies": {
 		"@catppuccin/palette": "^1.7.1",
+		"@github/copilot-sdk": "^0.1.29",
 		"@opencode-ai/sdk": "^1.2.10",
 		"better-sqlite3": "^12.6.2",
 		"env-paths": "^4.0.0",

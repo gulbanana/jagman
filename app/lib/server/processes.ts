@@ -11,7 +11,7 @@ export type AgentProcess = {
 	commandLine: string;
 };
 
-const AGENT_NAMES = ['claude', 'opencode'];
+const AGENT_NAMES = ['claude', 'opencode', 'copilot'];
 
 let cache: { timestamp: number; result: AgentProcess[] } | null = null;
 const CACHE_TTL = 5000;
@@ -162,7 +162,7 @@ public class JagmanProcCwd {
 }
 '@ -ErrorAction SilentlyContinue
 
-Get-CimInstance Win32_Process -Filter "Name='claude.exe' OR Name='opencode.exe'" | ForEach-Object {
+Get-CimInstance Win32_Process -Filter "Name='claude.exe' OR Name='opencode.exe' OR Name='copilot.exe'" | ForEach-Object {
     $cwd = [JagmanProcCwd]::Get($_.ProcessId)
     [PSCustomObject]@{ name=$_.Name; pid=[int]$_.ProcessId; cwd=$cwd; cmd=$_.CommandLine }
 } | ConvertTo-Json -Compress
