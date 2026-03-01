@@ -29,8 +29,15 @@
 	"napi": {
 		"binaryName": "libgg",
 		"targets": [
-			"x86_64-pc-windows-msvc"
+			"x86_64-pc-windows-msvc",
+			"aarch64-apple-darwin",
+			"x86_64-unknown-linux-gnu"
 		]
+	},
+	"optionalDependencies": {
+		"@gulbanana/jagman-win32-x64-msvc": "0.0.5",
+		"@gulbanana/jagman-darwin-arm64": "0.0.5",
+		"@gulbanana/jagman-linux-x64-gnu": "0.0.5"
 	},
 	"files": [
 		"build/**",

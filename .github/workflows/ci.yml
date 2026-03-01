@@ -1,0 +1,148 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - master
+      - release
+
+permissions:
+  contents: read
+
+jobs:
+  build-napi:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-pc-windows-msvc
+            runner: windows-latest
+          - target: aarch64-apple-darwin
+            runner: macos-latest
+          - target: x86_64-unknown-linux-gnu
+            runner: ubuntu-latest
+    name: Build native - ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install system dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf
+
+      - run: npm ci
+
+      - name: Build native addon
+        run: npx napi build --release --platform --target ${{ matrix.target }} --esm
+
+      - name: Upload bindings artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bindings-${{ matrix.target }}
+          path: |
+            *.node
+            index.js
+            index.d.ts
+          if-no-files-found: error
+
+  build-sveltekit:
+    name: Build SvelteKit
+    needs: build-napi
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Download Linux bindings
+        uses: actions/download-artifact@v4
+        with:
+          name: bindings-x86_64-unknown-linux-gnu
+          path: .
+
+      - run: npm ci
+
+      - name: Build SvelteKit
+        run: npx vite build
+
+      - name: Upload SvelteKit build
+        uses: actions/upload-artifact@v4
+        with:
+          name: sveltekit-build
+          path: build/
+          if-no-files-found: error
+
+  publish:
+    name: Publish
+    needs:
+      - build-napi
+      - build-sveltekit
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - run: npm ci
+
+      - name: Download all bindings artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: bindings-*
+          path: artifacts
+
+      - name: Copy index.js and index.d.ts to project root
+        run: |
+          cp artifacts/bindings-x86_64-unknown-linux-gnu/index.js .
+          cp artifacts/bindings-x86_64-unknown-linux-gnu/index.d.ts .
+
+      - name: Distribute .node files into platform packages
+        run: npx napi artifacts --output-dir artifacts --npm-dir npm
+
+      - name: Download SvelteKit build
+        uses: actions/download-artifact@v4
+        with:
+          name: sveltekit-build
+          path: build
+
+      - name: Publish platform packages (dry-run)
+        if: github.ref == 'refs/heads/master'
+        run: |
+          for dir in npm/*/; do
+            npm publish "$dir" --access public --provenance --dry-run --ignore-scripts
+          done
+
+      - name: Publish main package (dry-run)
+        if: github.ref == 'refs/heads/master'
+        run: npm publish --access public --provenance --dry-run --ignore-scripts
+
+      - name: Publish platform packages
+        if: github.ref == 'refs/heads/release'
+        run: |
+          for dir in npm/*/; do
+            npm publish "$dir" --access public --provenance --ignore-scripts
+          done
+
+      - name: Publish main package
+        if: github.ref == 'refs/heads/release'
+        run: npm publish --access public --provenance --ignore-scripts

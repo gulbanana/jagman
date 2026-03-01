@@ -1,0 +1,41 @@
+{
+  "name": "@gulbanana/jagman-linux-x64-gnu",
+  "version": "0.0.5",
+  "cpu": [
+    "x64"
+  ],
+  "main": "libgg.linux-x64-gnu.node",
+  "files": [
+    "libgg.linux-x64-gnu.node"
+  ],
+  "description": "Dashboard for managing multiple LLM coding agents across repositories using Jujutsu workspaces",
+  "keywords": [
+    "llm",
+    "agent",
+    "coding-agent",
+    "claude",
+    "opencode",
+    "jujutsu",
+    "dashboard",
+    "sveltekit"
+  ],
+  "author": {
+    "name": "Thomas Castiglione"
+  },
+  "homepage": "https://github.com/gulbanana/jagman",
+  "license": "AGPL-3.0-or-later",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gulbanana/jagman.git"
+  },
+  "bugs": "https://github.com/gulbanana/jagman/issues",
+  "os": [
+    "linux"
+  ],
+  "libc": [
+    "glibc"
+  ]
+}

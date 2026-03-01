@@ -1,0 +1,38 @@
+{
+  "name": "@gulbanana/jagman-darwin-arm64",
+  "version": "0.0.5",
+  "cpu": [
+    "arm64"
+  ],
+  "main": "libgg.darwin-arm64.node",
+  "files": [
+    "libgg.darwin-arm64.node"
+  ],
+  "description": "Dashboard for managing multiple LLM coding agents across repositories using Jujutsu workspaces",
+  "keywords": [
+    "llm",
+    "agent",
+    "coding-agent",
+    "claude",
+    "opencode",
+    "jujutsu",
+    "dashboard",
+    "sveltekit"
+  ],
+  "author": {
+    "name": "Thomas Castiglione"
+  },
+  "homepage": "https://github.com/gulbanana/jagman",
+  "license": "AGPL-3.0-or-later",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gulbanana/jagman.git"
+  },
+  "bugs": "https://github.com/gulbanana/jagman/issues",
+  "os": [
+    "darwin"
+  ]
+}
