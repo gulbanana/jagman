@@ -227,3 +227,11 @@ You MUST use this tool whenever writing Svelte code before sending it to the use
 ### Type Checking
 
 Run `npm run check` to check for TypeScript errors. This runs `svelte-kit sync` followed by `svelte-check`.
+
+### Versioning
+
+When bumping the package version, three places need updating:
+
+1. `npm version <patch|minor|major>` — bumps root `package.json` `version`
+2. `npx napi version` — syncs all `npm/*/package.json` versions to match
+3. Manually update the version values in `optionalDependencies` in root `package.json`
