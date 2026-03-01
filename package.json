@@ -35,9 +35,9 @@
 		]
 	},
 	"optionalDependencies": {
-		"@gulbanana/jagman-win32-x64-msvc": "0.0.5",
-		"@gulbanana/jagman-darwin-arm64": "0.0.5",
-		"@gulbanana/jagman-linux-x64-gnu": "0.0.5"
+		"@gulbanana/jagman-win32-x64-msvc": "0.1.0",
+		"@gulbanana/jagman-darwin-arm64": "0.1.0",
+		"@gulbanana/jagman-linux-x64-gnu": "0.1.0"
 	},
 	"files": [
 		"build/**",
