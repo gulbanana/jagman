@@ -190,7 +190,7 @@ export default class OpenCodeAgent implements Agent {
 	async loadSessions(workspacePaths: string[], maxSessions: number): Promise<AgentRepoSummary[]> {
 		const repos = await Promise.all(workspacePaths.map((path) => this.loadRepo(path, maxSessions)));
 
-		const processes = await getAgentProcesses();
+		const processes = getAgentProcesses();
 		const activeWorkspaces = getWorkspacesWithAgent(
 			processes,
 			'opencode',

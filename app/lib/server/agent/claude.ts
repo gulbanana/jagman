@@ -252,7 +252,7 @@ export default class ClaudeAgent implements Agent {
 			})
 		);
 
-		const processes = await getAgentProcesses();
+		const processes = getAgentProcesses();
 		const activeWorkspaces = getWorkspacesWithAgent(processes, 'claude');
 		markExternalSessions(repos.flatMap((r) => r.sessions), activeWorkspaces);
 

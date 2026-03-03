@@ -97,7 +97,7 @@ export default class CopilotAgent implements Agent {
 			)
 		);
 
-		const processes = await getAgentProcesses();
+		const processes = getAgentProcesses();
 		const activeWorkspaces = getWorkspacesWithAgent(processes, 'copilot');
 		markExternalSessions(repos.flatMap((r) => r.sessions), activeWorkspaces);
 

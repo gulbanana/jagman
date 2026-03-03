@@ -1,4 +1,3 @@
-- xplat process (this is also perf)
 - switch to local gg to validate workspace apis
 - wide + concertina cards
 - card: prompt + config

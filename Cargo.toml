@@ -16,6 +16,7 @@ gg-cli = "0.38.4"
 tokio = { version = "1", features = ["net", "rt-multi-thread", "sync", "macros"] }
 axum = "0.8"
 log = "0.4"
+sysinfo = "0.38.3"
 
 [build-dependencies]
 napi-build = "2"

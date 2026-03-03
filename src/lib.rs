@@ -5,9 +5,77 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::{LazyLock, Mutex};
 
+use sysinfo::{ProcessRefreshKind, ProcessesToUpdate, System, UpdateKind};
 use tokio::net::TcpListener;
 use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
+
+// ---------------------------------------------------------------------------
+// Process inspection
+// ---------------------------------------------------------------------------
+
+#[napi(object)]
+pub struct AgentProcess {
+    pub name: String,
+    pub pid: u32,
+    pub cwd: String,
+    pub command_line: String,
+}
+
+/// Find running processes whose name matches one of the given agent names.
+/// Returns each matching process's name, PID, working directory, and command line.
+/// Names are matched case-insensitively and without `.exe` suffix on Windows.
+#[napi]
+pub fn get_agent_processes(names: Vec<String>) -> Vec<AgentProcess> {
+    let mut sys = System::new();
+    sys.refresh_processes_specifics(
+        ProcessesToUpdate::All,
+        true,
+        ProcessRefreshKind::nothing()
+            .with_cwd(UpdateKind::OnlyIfNotSet)
+            .with_cmd(UpdateKind::OnlyIfNotSet),
+    );
+
+    let mut results = Vec::new();
+    for (_pid, process) in sys.processes() {
+        let proc_name = process.name().to_string_lossy();
+        let normalised = proc_name
+            .strip_suffix(".exe")
+            .or_else(|| proc_name.strip_suffix(".EXE"))
+            .unwrap_or(&proc_name)
+            .to_lowercase();
+
+        let Some(matched_name) = names.iter().find(|n| n.to_lowercase() == normalised) else {
+            continue;
+        };
+        let Some(cwd) = process.cwd() else {
+            continue;
+        };
+
+        // Strip trailing path separators for consistent matching
+        let mut cwd_str = cwd.to_string_lossy().into_owned();
+        while cwd_str.ends_with('/') || cwd_str.ends_with('\\') {
+            cwd_str.pop();
+        }
+
+        results.push(AgentProcess {
+            name: matched_name.clone(),
+            pid: process.pid().as_u32(),
+            cwd: cwd_str,
+            command_line: process
+                .cmd()
+                .iter()
+                .map(|s| s.to_string_lossy())
+                .collect::<Vec<_>>()
+                .join(" "),
+        });
+    }
+    results
+}
+
+// ---------------------------------------------------------------------------
+// GG web server
+// ---------------------------------------------------------------------------
 
 struct GGInstance {
     port: u16,
