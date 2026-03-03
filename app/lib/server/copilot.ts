@@ -15,7 +15,7 @@ import type {
 } from '../messages';
 import { buildLastEntries } from './last-entries';
 import { getAgentProcesses, getWorkspacesWithAgent, markExternalSessions } from './processes';
-import { onShutdown } from '$lib/server/state';
+import { onShutdown, pushActivity } from '$lib/server/state';
 
 /**
  * Client lifecycle management.
@@ -34,6 +34,7 @@ async function ensureClient(): Promise<CopilotClient> {
 	if (!clientInstance) {
 		clientInstance = new CopilotClient({ autoStart: true, useStdio: true });
 		await clientInstance.start();
+		pushActivity({ source: 'gc', event: 'startup', detail: 'Copilot client started', timestamp: Date.now() });
 	}
 	return clientInstance;
 }

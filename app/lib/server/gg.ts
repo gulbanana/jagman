@@ -9,7 +9,7 @@ import {
 	stopAllGgWeb as nativeStopAllGgWeb,
 } from 'libgg';
 import { homedir } from 'node:os';
-import { onShutdown } from '$lib/server/state';
+import { onShutdown, pushActivity } from '$lib/server/state';
 
 const HOME = homedir();
 
@@ -25,6 +25,7 @@ function fromDisplayPath(displayPath: string): string {
 export async function startGgWeb(displayPath: string): Promise<string> {
 	const fsPath = fromDisplayPath(displayPath);
 	const port = await nativeStartGgWeb(fsPath);
+	pushActivity({ source: 'jg', event: 'startup', detail: `GG web server started for ${displayPath}`, timestamp: Date.now() });
 	return `http://localhost:${port}/log`;
 }
 

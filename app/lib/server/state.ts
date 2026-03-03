@@ -58,19 +58,10 @@ export async function shutdown(): Promise<never> {
 	process.exit(0);
 }
 
-// --- Startup test events ---
+// --- Startup events ---
 pushActivity({
 	source: "jg",
 	event: "startup",
 	detail: "JAGMAN started",
 	timestamp: Date.now(),
 });
-
-setTimeout(() => {
-	pushActivity({
-		source: "jg",
-		event: "ready",
-		detail: "All agents initialized",
-		timestamp: Date.now(),
-	});
-}, 10_000);
