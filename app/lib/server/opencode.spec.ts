@@ -16,7 +16,7 @@ vi.mock('@opencode-ai/sdk', () => ({
 
 // -- Module under test (imported after mocks are declared) --
 
-import OpenCodeAgent, { closeOpenCodeServers } from './opencode';
+import OpenCodeAgent, { stopServer } from './opencode';
 
 // -- Helpers --
 
@@ -65,7 +65,7 @@ beforeEach(() => {
 
 afterEach(() => {
 	vi.useRealTimers();
-	closeOpenCodeServers();
+	stopServer();
 });
 
 // -- Tests --
@@ -216,13 +216,13 @@ describe('opencode server lifecycle', () => {
 			const agent = new OpenCodeAgent();
 			await agent.loadRepos(['/test/repo'], 10);
 
-			closeOpenCodeServers();
+			stopServer();
 
 			expect(proc.kill).toHaveBeenCalledOnce();
 		});
 
 		it('is safe to call when no server is running', () => {
-			closeOpenCodeServers();
+			stopServer();
 			expect(mockSpawn).not.toHaveBeenCalled();
 		});
 
@@ -231,7 +231,7 @@ describe('opencode server lifecycle', () => {
 			const agent = new OpenCodeAgent();
 			await agent.loadRepos(['/test/repo'], 10);
 
-			closeOpenCodeServers();
+			stopServer();
 
 			spawnEmitsUrl('http://127.0.0.1:22222');
 			await agent.loadRepos(['/test/repo'], 10);
@@ -244,7 +244,7 @@ describe('opencode server lifecycle', () => {
 			const agent = new OpenCodeAgent();
 			await agent.loadRepos(['/test/repo'], 10);
 
-			closeOpenCodeServers();
+			stopServer();
 
 			spawnEmitsUrl('http://127.0.0.1:22222');
 			await agent.loadRepos(['/test/repo'], 10);
@@ -257,7 +257,7 @@ describe('opencode server lifecycle', () => {
 			const agent = new OpenCodeAgent();
 			await agent.loadRepos(['/test/repo'], 10);
 
-			closeOpenCodeServers();
+			stopServer();
 
 			spawnEmitsUrl('http://127.0.0.1:22222');
 			await agent.loadRepos(['/test/repo'], 10);

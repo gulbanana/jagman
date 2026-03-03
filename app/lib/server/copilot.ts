@@ -15,7 +15,7 @@ import type {
 } from '../messages';
 import { buildLastEntries } from './last-entries';
 import { getAgentProcesses, getWorkspacesWithAgent, markExternalSessions } from './processes';
-import { onShutdown, pushActivity } from '$lib/server/state';
+import { initService } from '$lib/server/state';
 
 /**
  * Client lifecycle management.
@@ -25,30 +25,30 @@ import { onShutdown, pushActivity } from '$lib/server/state';
  * CopilotClient replaces opencode's per-directory client map — Copilot
  * sessions carry `context.cwd` metadata for repo filtering.
  */
-let clientInstance: CopilotClient | null = null;
 
-/** Session ID → repo path, populated during loadRepos for fast lookups in loadSession. */
-const sessionRepoCache = new Map<string, string>();
+type CpState = {
+	clientInstance: CopilotClient | null;
+	sessionRepoCache: Map<string, string>;
+};
+
+const cp = initService<CpState>('copilot', () => ({
+	clientInstance: null,
+	sessionRepoCache: new Map(),
+}), async (s) => {
+	if (s.clientInstance) {
+		await s.clientInstance.stop();
+		s.clientInstance = null;
+	}
+	s.sessionRepoCache.clear();
+});
 
 async function ensureClient(): Promise<CopilotClient> {
-	if (!clientInstance) {
-		clientInstance = new CopilotClient({ autoStart: true, useStdio: true });
-		await clientInstance.start();
-		pushActivity({ source: 'gc', event: 'startup', detail: 'Copilot client started', timestamp: Date.now() });
+	if (!cp.clientInstance) {
+		cp.clientInstance = new CopilotClient({ autoStart: true, useStdio: true });
+		await cp.clientInstance.start();
 	}
-	return clientInstance;
+	return cp.clientInstance;
 }
-
-/** Shut down the Copilot client and clear all cached state. */
-export async function closeCopilotClient(): Promise<void> {
-	if (clientInstance) {
-		await clientInstance.stop();
-		clientInstance = null;
-	}
-	sessionRepoCache.clear();
-}
-
-onShutdown('copilot', closeCopilotClient);
 
 function mapCopilotMode(mode: string | null): SessionMode | null {
 	switch (mode) {
@@ -128,7 +128,7 @@ export default class CopilotAgent implements Agent {
 		metadata: SessionMetadata,
 		repoPath: string
 	): Promise<AgentRepoSessionSummary> {
-		sessionRepoCache.set(metadata.sessionId, repoPath);
+		cp.sessionRepoCache.set(metadata.sessionId, repoPath);
 
 		const session = await client.resumeSession(metadata.sessionId, {
 			onPermissionRequest: approveAll,

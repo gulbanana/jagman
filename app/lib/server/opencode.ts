@@ -12,7 +12,7 @@ import type { AgentBrand } from '../brands';
 import type { AgentDetail, AgentRepoSummary, AgentRepoSessionSummary, LogEntry, SessionMode, SessionStatus } from '../messages';
 import { buildLastEntries } from './last-entries';
 import { getAgentProcesses, getWorkspacesWithAgent, markExternalSessions } from './processes';
-import { onShutdown, pushActivity } from '$lib/server/state';
+import { initService } from '$lib/server/state';
 
 /**
  * Server lifecycle management.
@@ -38,14 +38,38 @@ import { onShutdown, pushActivity } from '$lib/server/state';
  * without `shell: true`, which fails on Windows where the `opencode`
  * binary is behind a `.cmd` shim.
  */
-let serverHandle: { url: string; proc: ChildProcess } | null = null;
-const clients = new Map<string, OpencodeClient>();
 
-/** Session ID → repo path, populated during loadRepos for fast lookups in loadSession. */
-const sessionRepoCache = new Map<string, string>();
+type OcState = {
+	serverHandle: { url: string; proc: ChildProcess } | null;
+	clients: Map<string, OpencodeClient>;
+	sessionRepoCache: Map<string, string>;
+};
+
+const oc = initService<OcState>('opencode', () => ({
+	serverHandle: null,
+	clients: new Map(),
+	sessionRepoCache: new Map(),
+}), (s) => {
+	if (s.serverHandle) {
+		s.serverHandle.proc.kill();
+		s.serverHandle = null;
+	}
+	s.clients.clear();
+	s.sessionRepoCache.clear();
+});
+
+/** Shut down the managed OpenCode server and clear all cached state. */
+export function stopServer(): void {
+	if (oc.serverHandle) {
+		oc.serverHandle.proc.kill();
+		oc.serverHandle = null;
+	}
+	oc.clients.clear();
+	oc.sessionRepoCache.clear();
+}
 
 async function ensureServer(): Promise<string> {
-	if (!serverHandle) {
+	if (!oc.serverHandle) {
 		const timeout = 5000;
 		const args = ['serve', '--hostname=127.0.0.1', '--port=0'];
 		const proc = spawn('opencode', args, {
@@ -100,34 +124,21 @@ async function ensureServer(): Promise<string> {
 			});
 		});
 
-		serverHandle = { url, proc };
-		pushActivity({ source: 'oc', event: 'startup', detail: 'OpenCode server started', timestamp: Date.now() });
+		oc.serverHandle = { url, proc };
 	}
-	return serverHandle.url;
+	return oc.serverHandle.url;
 }
 
 async function getClient(directory: string): Promise<OpencodeClient> {
 	const key = directory.toLowerCase();
-	let client = clients.get(key);
+	let client = oc.clients.get(key);
 	if (!client) {
 		const baseUrl = await ensureServer();
 		client = createOpencodeClient({ baseUrl, directory });
-		clients.set(key, client);
+		oc.clients.set(key, client);
 	}
 	return client;
 }
-
-/** Shut down the managed OpenCode server and clear all cached state. */
-export function closeOpenCodeServers(): void {
-	if (serverHandle) {
-		serverHandle.proc.kill();
-		serverHandle = null;
-	}
-	clients.clear();
-	sessionRepoCache.clear();
-}
-
-onShutdown('opencode', closeOpenCodeServers);
 
 function mapOcStatus(status: OcSessionStatus | undefined): SessionStatus {
 	if (!status) return 'inactive';
@@ -204,7 +215,7 @@ export default class OpenCodeAgent implements Agent {
 		statusMap: Record<string, OcSessionStatus>,
 		repoPath: string
 	): Promise<AgentRepoSessionSummary> {
-		sessionRepoCache.set(session.id, repoPath);
+		oc.sessionRepoCache.set(session.id, repoPath);
 
 		const result = await client.session.messages({
 			path: { id: session.id }
@@ -270,12 +281,12 @@ export default class OpenCodeAgent implements Agent {
 	async loadSession(
 		id: string
 	): Promise<Omit<AgentDetail, 'brand'> | null> {
-		const repoPath = sessionRepoCache.get(id);
+		const repoPath = oc.sessionRepoCache.get(id);
 		if (repoPath) {
 			return this.fetchSession(id, repoPath);
 		}
 		// Fallback: try all known clients
-		for (const [dir] of clients) {
+		for (const [dir] of oc.clients) {
 			const result = await this.fetchSession(id, dir);
 			if (result) return result;
 		}
