@@ -4,10 +4,12 @@
 	import type { RepoSummary, SessionMode } from "$lib/messages";
 
 	let {
-		repo,
+		displayPath,
+		repo = null,
 		onclick,
 	}: {
-		repo: RepoSummary;
+		displayPath: string;
+		repo?: RepoSummary | null;
 		onclick: () => void;
 	} = $props();
 
@@ -18,23 +20,27 @@
 	};
 
 	const greatestMode = $derived(
-		repo.sessions.reduce<SessionMode | null>((best, s) => {
-			if (s.status === "inactive" || s.mode === null) return best;
-			if (best === null) return s.mode;
-			return modeRank[s.mode] > modeRank[best] ? s.mode : best;
-		}, null),
+		repo
+			? repo.sessions.reduce<SessionMode | null>((best, s) => {
+					if (s.status === "inactive" || s.mode === null) return best;
+					if (best === null) return s.mode;
+					return modeRank[s.mode] > modeRank[best] ? s.mode : best;
+				}, null)
+			: null,
 	);
 
 	const running = $derived(
-		repo.sessions.filter(
-			(s) => s.status === "running" || s.status === "external",
-		).length,
+		repo
+			? repo.sessions.filter(
+					(s) => s.status === "running" || s.status === "external",
+				).length
+			: 0,
 	);
 	const waiting = $derived(
-		repo.sessions.filter((s) => s.status === "waiting").length,
+		repo ? repo.sessions.filter((s) => s.status === "waiting").length : 0,
 	);
 	const done = $derived(
-		repo.sessions.filter((s) => s.status === "inactive").length,
+		repo ? repo.sessions.filter((s) => s.status === "inactive").length : 0,
 	);
 </script>
 
@@ -45,34 +51,38 @@
 				class="repo-name"
 				class:standard={greatestMode === "standard"}
 				class:plan={greatestMode === "plan"}
-				class:yolo={greatestMode === "yolo"}>{repo.path}</span>
+				class:yolo={greatestMode === "yolo"}>{displayPath}</span>
 		{/snippet}
-		<div class="repo-info">
-			{#if running > 0}
-				<span class="stat"
-					><span class="dot dot-running"></span><span class="value"
-						>{running}</span
-					><span class="desc">running</span></span>
-			{/if}
-			{#if waiting > 0}
-				<span class="stat"
-					><span class="dot dot-waiting"></span><span class="value"
-						>{waiting}</span
-					><span class="desc">waiting</span></span>
-			{/if}
-			{#if done > 0}
-				<span class="stat"
-					><span class="dot dot-done"></span><span class="value"
-						>{done}+</span
-					><span class="desc">done</span></span>
-			{/if}
-		</div>
-		{#if repo.errors.length > 0}
-			<div class="repo-errors">
-				{#each repo.errors as error}
-					<ErrorSpan>[{error.brand}] {error.message}</ErrorSpan>
-				{/each}
+		{#if repo}
+			<div class="repo-info">
+				{#if running > 0}
+					<span class="stat"
+						><span class="dot dot-running"></span><span class="value"
+							>{running}</span
+						><span class="desc">running</span></span>
+				{/if}
+				{#if waiting > 0}
+					<span class="stat"
+						><span class="dot dot-waiting"></span><span class="value"
+							>{waiting}</span
+						><span class="desc">waiting</span></span>
+				{/if}
+				{#if done > 0}
+					<span class="stat"
+						><span class="dot dot-done"></span><span class="value"
+							>{done}+</span
+						><span class="desc">done</span></span>
+				{/if}
 			</div>
+			{#if repo.errors.length > 0}
+				<div class="repo-errors">
+					{#each repo.errors as error}
+						<ErrorSpan>[{error.brand}] {error.message}</ErrorSpan>
+					{/each}
+				</div>
+			{/if}
+		{:else}
+			<div class="loading-state">Loading...</div>
 		{/if}
 	</Pane>
 </button>
@@ -151,5 +161,13 @@
 		display: flex;
 		flex-direction: column;
 		gap: 2px;
+	}
+
+	.loading-state {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-family: var(--ff-ui);
+		color: var(--ctp-subtext0);
 	}
 </style>

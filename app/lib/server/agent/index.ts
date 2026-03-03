@@ -1,6 +1,6 @@
 import { homedir } from 'node:os';
 import type { AgentBrand } from "../../brands";
-import type { AgentDetail, AgentRepoSummary, RepoSessionSummary, RepoError, RepoSummary, } from "../../messages";
+import type { AgentDetail, AgentRepoSummary, RepoSessionSummary, RepoError, RepoStub, RepoSummary, } from "../../messages";
 import { ActiveOrder, activeFirstCompare } from "../active-order";
 import ClaudeAgent from "./claude";
 import CopilotAgent from "./copilot";
@@ -29,6 +29,60 @@ function toDisplayPath(path: string): string {
 		return '~' + path.slice(HOME.length);
 	}
 	return path;
+}
+
+export function getRepoStubs(): RepoStub[] {
+	return listRepositories().map((repo) => ({
+		path: repo.path,
+		displayPath: toDisplayPath(repo.path),
+	}));
+}
+
+export async function getRepoSummary(repoPath: string): Promise<RepoSummary> {
+	const sessions: RepoSessionSummary[] = [];
+	const errors: RepoError[] = [];
+	let branch = '';
+
+	for (const agent of wellKnownAgents) {
+		let agentRepos: AgentRepoSummary[];
+		try {
+			agentRepos = await agent.loadRepos([repoPath], 10);
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			errors.push({ brand: agent.brand, message });
+			continue;
+		}
+
+		for (const repo of agentRepos) {
+			const brandedSessions = repo.sessions.map((s): RepoSessionSummary => ({
+				...s,
+				mode: s.status == 'inactive' ? null : s.mode,
+				brand: agent.brand,
+			}));
+			sessions.push(...brandedSessions);
+
+			if (!branch || branch === 'HEAD') {
+				branch = repo.branch;
+			}
+		}
+	}
+
+	// Sort sessions: active first in FIFO order, then inactive by timestamp descending
+	const activeSessionIds = sessions
+		.filter((s) => s.status === 'running' || s.status === 'waiting' || s.status === 'external')
+		.map((s) => s.id);
+	const sessionIndex = sessionOrder.update(activeSessionIds);
+
+	sessions.sort((a, b) =>
+		activeFirstCompare(sessionIndex, a.id, a.timestamp, b.id, b.timestamp)
+	);
+
+	return {
+		path: toDisplayPath(repoPath),
+		branch,
+		sessions,
+		errors,
+	};
 }
 
 export async function getAllRepos(): Promise<RepoSummary[]> {

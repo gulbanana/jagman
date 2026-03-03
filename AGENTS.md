@@ -59,10 +59,12 @@ A horizontal strip across the top containing **attention cards** — things that
 
 #### Repo Area
 
-A horizontally-scrolling row of **repo columns** (using lookless scrolling), one per repository. Each column is a vertical stack (also lookless-scrolling) containing:
+A horizontally-scrolling row of **repo columns** (using lookless scrolling), one per repository. Columns load progressively: repo paths are fetched from the DB (milliseconds), columns render immediately with a loading-state header, then each column independently fetches its agent data from all backends. Each column is wrapped in a `<svelte:boundary>` with `pending` and `failed` snippets so that loading and errors are isolated per-repo.
 
-1. A **repo header pane** — the repository path, branch name, and agent count. The repo name is coloured peach when any agents are active. Clickable to show repo details in the detail pane.
-2. **Agent cards** — buttons wrapping headerless panes, one per agent session (both active and historical). Each shows information about a running agent or past session.
+Each column is a vertical stack (also lookless-scrolling) containing:
+
+1. A **repo header pane** — the repository display path and agent count summary. Shows "Loading..." in the empty-state style while agent data is being fetched. The repo name is coloured peach when any agents are active. Clickable to show repo details in the detail pane.
+2. **Agent cards** — buttons wrapping headerless panes, one per agent session (both active and historical). Each shows information about a running agent or past session. Only appear once agent data has loaded.
 
 Agent cards have a coloured border indicating their mode:
 
@@ -106,8 +108,19 @@ To start a new agent session, the user clicks in the agent list (on a repo or a 
 - **`Pane`** — the core presentational component. A bordered box with an optional header and content area. Supports `stackedAbove`/`stackedBelow` flags to remove rounded corners for vertical stacking, and a `mode` prop (`SessionMode | null`) that derives border colour from the agent's mode (peach for standard, blue for plan, red for yolo). When `animated` is set and a mode is active, a rotating conic-gradient border effect (spark) is applied.
 - **`AttentionBar`** / **`AttentionCard`** — the top-level attention strip and its items.
 - **`RepoColumn`** — a vertical scrolling container using the lookless scrolling pattern.
+- **`RepoCard`** — a button wrapping a Pane as the repo header. Takes a `displayPath` (always available) and an optional `repo: RepoSummary | null`. When `repo` is null, shows a loading state; when loaded, shows agent count dots and errors.
+- **`RepoColumnContent`** — an async component that fetches one repo's agent data via `getRepoSummary(stub.path)` and renders the `RepoCard` (with loaded data) plus `AgentCard`s. The parent wraps it in `<svelte:boundary>` to provide pending/failed fallbacks.
 - **`AgentCard`** — a button wrapping a headerless Pane with mode-coloured border.
 - **Detail pane** — the right-hand panel contains a `Pane` with a client-side header and an iframe. The iframe loads routes under `/detail/` (agent output, repo views via GG). Detail routes use the root layout (theme only, no sidebars) and render with a `--ctp-crust` background to match the Pane content area.
+
+### Data Loading
+
+The dashboard uses a two-phase loading pattern via SvelteKit remote functions (`data.remote.ts`):
+
+1. **`getRepoStubs()`** — synchronous DB query returning `RepoStub[]` (path + display path). The page blocks only on this fast call.
+2. **`getRepoSummary(path)`** — async per-repo call that queries all agent backends (`ClaudeAgent`, `OpenCodeAgent`, `CopilotAgent`) for one repo's sessions, merges branded sessions, and sorts them.
+
+Each `RepoColumnContent` independently awaits `getRepoSummary`, so repos load concurrently. Agent backends that cache initial state (e.g. `ClaudeAgent`'s project index) must coalesce concurrent initialization to avoid redundant work — see the `projectIndexPending` pattern in `claude.ts`.
 
 ### Native Addon (`libgg`)
 
@@ -187,6 +200,7 @@ When a region has no content to display, show centered placeholder text using th
 
 Used by:
 - **Detail pane placeholder** (`detail/empty`) — "Open a repository to get started."
+- **RepoCard** — "Loading..." when agent data has not yet arrived
 - **AgentCard** — "Awaiting prompt." when no log entries exist
 - **Status messages** (`.status-message` in `+page.svelte`) — loading and error states
 

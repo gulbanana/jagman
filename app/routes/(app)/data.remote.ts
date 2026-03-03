@@ -1,10 +1,14 @@
 import { query } from '$app/server';
 import { mockAttentionCards } from '$lib/server/mock-data';
-import { getAllRepos } from '$lib/server/agent';
+import { getRepoStubs as getRepoStubsServer, getRepoSummary as getRepoSummaryServer } from '$lib/server/agent';
 import { getActivity as getActivityEntries } from '$lib/server/state';
 
-export const getRepos = query(async () => {
-	return getAllRepos();
+export const getRepoStubs = query(async () => {
+	return getRepoStubsServer();
+});
+
+export const getRepoSummary = query('unchecked', async (path: string) => {
+	return getRepoSummaryServer(path);
 });
 
 export const getAttentionCards = query(async () => {

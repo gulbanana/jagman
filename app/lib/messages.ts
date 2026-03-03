@@ -1,5 +1,12 @@
 import type { AgentBrand } from "./brands";
 
+/* repo stubs for progressive loading */
+
+export type RepoStub = {
+	path: string;
+	displayPath: string;
+};
+
 /* unbranded single-agent data */
 
 export type SessionStatus = "running" | "waiting" | "inactive" | "external";

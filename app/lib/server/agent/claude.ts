@@ -23,6 +23,8 @@ const PROJECTS_DIR = join(homedir(), '.claude', 'projects');
 
 /** Cached index of workspace cwd → project directory name */
 let projectIndex: Map<string, string> | null = null;
+/** Coalesces concurrent getProjectIndex() calls so only one build occurs. */
+let projectIndexPending: Promise<Map<string, string>> | null = null;
 
 /** Cached index of session ID → JSONL file path, populated by readProjectSessions */
 const sessionFileCache = new Map<string, string>();
@@ -101,10 +103,22 @@ async function buildProjectIndex(): Promise<Map<string, string>> {
 }
 
 async function getProjectIndex(): Promise<Map<string, string>> {
-	if (!projectIndex) {
-		projectIndex = await buildProjectIndex();
+	if (projectIndex) return projectIndex;
+
+	if (!projectIndexPending) {
+		projectIndexPending = buildProjectIndex().then(
+			(index) => {
+				projectIndex = index;
+				projectIndexPending = null;
+				return index;
+			},
+			(err) => {
+				projectIndexPending = null;
+				throw err;
+			}
+		);
 	}
-	return projectIndex;
+	return projectIndexPending;
 }
 
 /**

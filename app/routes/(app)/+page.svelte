@@ -2,29 +2,27 @@
     import Icon from "$lib/Icon.svelte";
     import Pane from "$lib/Pane.svelte";
     import { overflowing } from "$lib/overflowing";
-    import { getRepos, getAttentionCards } from "./data.remote";
+    import { getRepoStubs, getAttentionCards } from "./data.remote";
     import { brandIcons, type AgentBrand } from "$lib/brands";
     import AttentionBar from "./AttentionBar.svelte";
     import AttentionCard from "./AttentionCard.svelte";
     import RepoColumn from "./RepoColumn.svelte";
     import RepoCard from "./RepoCard.svelte";
-    import AgentCard from "./AgentCard.svelte";
+    import RepoColumnContent from "./RepoColumnContent.svelte";
     import ControlButton from "$lib/ControlButton.svelte";
     import ErrorSpan from "$lib/ErrorSpan.svelte";
 
     type Selection =
-        | { kind: "agent"; brand: AgentBrand; id: string }
+        | { kind: "agent"; brand: AgentBrand; id: string; title: string }
         | { kind: "repo"; path: string };
 
-    const reposPromise = $derived(getRepos());
+    const repoPathsPromise = $derived(getRepoStubs());
     const cardsPromise = $derived(getAttentionCards());
 
-    const repos = $derived(await reposPromise);
+    const repoPaths = $derived(await repoPathsPromise);
     const cards = $derived(await cardsPromise);
 
     let selection: Selection | null = $state(null);
-
-    const allAgents = $derived(repos.flatMap((r) => r.sessions));
 
     const detailSrc = $derived.by(() => {
         const s = selection;
@@ -38,7 +36,7 @@
         const s = selection;
         if (!s) return "";
         if (s.kind === "agent") {
-            return allAgents.find((a) => a.id === s.id)?.title;
+            return s.title;
         }
         return s.path;
     });
@@ -51,8 +49,8 @@
             : { kind: "feather" as const, name: "git-branch" };
     });
 
-    function selectAgent(brand: AgentBrand, id: string) {
-        selection = { kind: "agent", brand, id };
+    function selectAgent(brand: AgentBrand, id: string, title: string) {
+        selection = { kind: "agent", brand, id, title };
     }
 
     function selectRepo(path: string) {
@@ -68,8 +66,8 @@
     });
 
     $effect(() => {
-        if (selection === null && repos.length > 0) {
-            selection = { kind: "repo", path: repos[0].path };
+        if (selection === null && repoPaths.length > 0) {
+            selection = { kind: "repo", path: repoPaths[0].displayPath };
         }
     });
 </script>
@@ -152,33 +150,36 @@
 
     <div class="bottom">
         <div class="repos" use:overflowing>
-            <svelte:boundary>
-                {#each repos as repo (repo.path)}
-                    <RepoColumn>
-                        <RepoCard
-                            {repo}
-                            onclick={() => selectRepo(repo.path)} />
-
-                        {#each repo.sessions as session (session.id)}
-                            <AgentCard
-                                {session}
-                                selected={selection?.kind === "agent" &&
-                                    selection.id === session.id}
-                                onclick={() =>
-                                    selectAgent(session.brand, session.id)} />
-                        {/each}
-                    </RepoColumn>
-                {/each}
-                {#snippet failed(error)}
-                    <div class="status-message">
-                        <ErrorSpan>
-                            Render error: {error instanceof Error
-                                ? error.message
-                                : error}
-                        </ErrorSpan>
-                    </div>
-                {/snippet}
-            </svelte:boundary>
+            {#each repoPaths as stub (stub.path)}
+                <RepoColumn>
+                    <svelte:boundary>
+                        <RepoColumnContent
+                            {stub}
+                            selectedAgentId={selection?.kind === "agent"
+                                ? selection.id
+                                : null}
+                            onselectrepo={() => selectRepo(stub.displayPath)}
+                            onselectagent={selectAgent} />
+                        {#snippet pending()}
+                            <RepoCard
+                                displayPath={stub.displayPath}
+                                onclick={() => selectRepo(stub.displayPath)} />
+                        {/snippet}
+                        {#snippet failed(error)}
+                            <RepoCard
+                                displayPath={stub.displayPath}
+                                onclick={() => selectRepo(stub.displayPath)} />
+                            <div class="status-message">
+                                <ErrorSpan>
+                                    {error instanceof Error
+                                        ? error.message
+                                        : error}
+                                </ErrorSpan>
+                            </div>
+                        {/snippet}
+                    </svelte:boundary>
+                </RepoColumn>
+            {/each}
         </div>
 
         <div class="detail">
@@ -229,6 +230,7 @@
     }
 
     .layout {
+        height: 100%;
         display: grid;
         grid-template-rows: 1fr minmax(0, 2fr);
         overflow: hidden;
