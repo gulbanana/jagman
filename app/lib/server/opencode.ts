@@ -12,6 +12,7 @@ import type { AgentBrand } from '../brands';
 import type { AgentDetail, AgentRepoSummary, AgentRepoSessionSummary, LogEntry, SessionMode, SessionStatus } from '../messages';
 import { buildLastEntries } from './last-entries';
 import { getAgentProcesses, getWorkspacesWithAgent, markExternalSessions } from './processes';
+import { onShutdown } from '$lib/server/state';
 
 /**
  * Server lifecycle management.
@@ -124,6 +125,8 @@ export function closeOpenCodeServers(): void {
 	clients.clear();
 	sessionRepoCache.clear();
 }
+
+onShutdown('opencode', closeOpenCodeServers);
 
 function mapOcStatus(status: OcSessionStatus | undefined): SessionStatus {
 	if (!status) return 'inactive';

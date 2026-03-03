@@ -23,6 +23,41 @@ export function subscribeActivity(listener: Listener): () => void {
 	};
 }
 
+// --- Lifecycle management ---
+
+type CleanupFn = () => void | Promise<void>;
+type CleanupEntry = { name: string; fn: CleanupFn };
+
+const cleanupHooks: CleanupEntry[] = [];
+const lateCleanupHooks: CleanupEntry[] = [];
+let shuttingDown = false;
+
+/** Register a cleanup function to run on shutdown. `{ late: true }` defers it to after all normal hooks. */
+export function onShutdown(name: string, fn: CleanupFn, options?: { late: boolean }): void {
+	const list = options?.late ? lateCleanupHooks : cleanupHooks;
+	list.push({ name, fn });
+}
+
+/** Run all cleanup hooks and exit. Re-entrant calls force-exit immediately. */
+export async function shutdown(): Promise<never> {
+	if (shuttingDown) {
+		process.exit(1);
+	}
+	shuttingDown = true;
+
+	for (const phase of [cleanupHooks, lateCleanupHooks]) {
+		const results = await Promise.allSettled(phase.map((h) => h.fn()));
+		for (let i = 0; i < results.length; i++) {
+			const result = results[i];
+			if (result.status === 'rejected') {
+				console.error(`Shutdown hook '${phase[i].name}' failed:`, result.reason);
+			}
+		}
+	}
+
+	process.exit(0);
+}
+
 // --- Startup test events ---
 pushActivity({
 	source: "jg",

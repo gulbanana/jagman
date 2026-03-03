@@ -9,6 +9,7 @@ import {
 	stopAllGgWeb as nativeStopAllGgWeb,
 } from 'libgg';
 import { homedir } from 'node:os';
+import { onShutdown } from '$lib/server/state';
 
 const HOME = homedir();
 
@@ -38,3 +39,5 @@ export function stopAllGgWeb(exceptDisplayPath: string | null): void {
 	const exceptFsPath = exceptDisplayPath !== null ? fromDisplayPath(exceptDisplayPath) : undefined;
 	nativeStopAllGgWeb(exceptFsPath);
 }
+
+onShutdown('gg', () => stopAllGgWeb(null));

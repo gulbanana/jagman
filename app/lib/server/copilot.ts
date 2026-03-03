@@ -15,6 +15,7 @@ import type {
 } from '../messages';
 import { buildLastEntries } from './last-entries';
 import { getAgentProcesses, getWorkspacesWithAgent, markExternalSessions } from './processes';
+import { onShutdown } from '$lib/server/state';
 
 /**
  * Client lifecycle management.
@@ -45,6 +46,8 @@ export async function closeCopilotClient(): Promise<void> {
 	}
 	sessionRepoCache.clear();
 }
+
+onShutdown('copilot', closeCopilotClient);
 
 function mapCopilotMode(mode: string | null): SessionMode | null {
 	switch (mode) {
