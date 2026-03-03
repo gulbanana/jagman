@@ -3,6 +3,7 @@
     import Pane from "$lib/Pane.svelte";
     import { overflowing } from "$lib/overflowing";
     import { getRepoStubs, getAttentionCards } from "./data.remote";
+    import { ActiveOrder, activeFirstCompare, type RepoActivitySignal } from "$lib/activity";
     import { brandIcons, type AgentBrand } from "$lib/brands";
     import AttentionBar from "./AttentionBar.svelte";
     import AttentionCard from "./AttentionCard.svelte";
@@ -23,6 +24,39 @@
     const cards = $derived(await cardsPromise);
 
     let selection: Selection | null = $state(null);
+
+    // Activity-based repo sorting
+    const repoSignals = new Map<string, RepoActivitySignal>();
+    let repoSignalVersion = $state(0);
+    const repoOrder = new ActiveOrder();
+
+    function handleRepoLoaded(signal: RepoActivitySignal) {
+        const existing = repoSignals.get(signal.path);
+        if (existing && existing.active === signal.active && existing.timestamp === signal.timestamp) {
+            return;
+        }
+        repoSignals.set(signal.path, signal);
+        repoSignalVersion++;
+    }
+
+    const sortedStubs = $derived.by(() => {
+        // Touch the version counter to establish reactivity
+        void repoSignalVersion;
+
+        const stubs = [...repoPaths];
+        const activePaths = stubs
+            .filter((s) => repoSignals.get(s.path)?.active)
+            .map((s) => s.path);
+        const activeIndex = repoOrder.update(activePaths);
+
+        stubs.sort((a, b) => {
+            const aTime = repoSignals.get(a.path)?.timestamp ?? 0;
+            const bTime = repoSignals.get(b.path)?.timestamp ?? 0;
+            return activeFirstCompare(activeIndex, a.path, aTime, b.path, bTime);
+        });
+
+        return stubs;
+    });
 
     const detailSrc = $derived.by(() => {
         const s = selection;
@@ -150,7 +184,7 @@
 
     <div class="bottom">
         <div class="repos" use:overflowing>
-            {#each repoPaths as stub (stub.path)}
+            {#each sortedStubs as stub (stub.path)}
                 <RepoColumn>
                     <svelte:boundary>
                         <RepoColumnContent
@@ -158,6 +192,7 @@
                             selectedAgentId={selection?.kind === "agent"
                                 ? selection.id
                                 : null}
+                            onloaded={handleRepoLoaded}
                             onselectrepo={() => selectRepo(stub.displayPath)}
                             onselectagent={selectAgent} />
                         {#snippet pending()}
