@@ -9,6 +9,7 @@ import {
 	stopAllGgWeb as nativeStopAllGgWeb,
 } from 'libgg';
 import { homedir } from 'node:os';
+import { normalize } from 'node:path';
 import { initService, pushActivity } from '$lib/server/state';
 
 const HOME = homedir();
@@ -16,7 +17,7 @@ const HOME = homedir();
 /** Reverse the display-path tilde convention back to a filesystem path. */
 function fromDisplayPath(displayPath: string): string {
 	if (displayPath.startsWith('~')) {
-		return HOME + displayPath.slice(1);
+		return normalize(HOME + displayPath.slice(1));
 	}
 	return displayPath;
 }

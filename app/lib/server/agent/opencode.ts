@@ -7,11 +7,11 @@ import type {
 	TextPart as OcTextPart,
 	ToolPart as OcToolPart
 } from '@opencode-ai/sdk';
-import type { Agent } from './agent';
-import type { AgentBrand } from '../brands';
-import type { AgentDetail, AgentRepoSummary, AgentRepoSessionSummary, LogEntry, SessionMode, SessionStatus } from '../messages';
+import type { Agent } from '.';
+import type { AgentBrand } from '../../brands';
+import type { AgentDetail, AgentRepoSummary, AgentRepoSessionSummary, LogEntry, SessionMode, SessionStatus } from '../../messages';
 import { buildLastEntries } from './last-entries';
-import { getAgentProcesses, getWorkspacesWithAgent, markExternalSessions } from './processes';
+import { getAgentProcesses, getWorkspacesWithAgent, markExternalSessions } from '../processes';
 import { initService } from '$lib/server/state';
 
 /**

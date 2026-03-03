@@ -1,9 +1,9 @@
 import { readdir, stat } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import type { Agent } from './agent';
-import type { AgentBrand } from '../brands';
-import type { AgentDetail, AgentRepoSummary, AgentRepoSessionSummary, LogEntry } from '../messages';
+import type { Agent } from '.';
+import type { AgentBrand } from '../../brands';
+import type { AgentDetail, AgentRepoSummary, AgentRepoSessionSummary, LogEntry } from '../../messages';
 import { buildLastEntries } from './last-entries';
 import {
 	readFirstUserRecord,
@@ -16,8 +16,8 @@ import {
 	isMetaMessage,
 	type UserRecord
 } from './jsonl';
-import { getAgentProcesses, getWorkspacesWithAgent, markExternalSessions } from './processes';
-import type { SessionMode } from '../messages';
+import { getAgentProcesses, getWorkspacesWithAgent, markExternalSessions } from '../processes';
+import type { SessionMode } from '../../messages';
 
 const PROJECTS_DIR = join(homedir(), '.claude', 'projects');
 

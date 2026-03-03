@@ -1,4 +1,4 @@
-import type { LogEntry } from '../messages';
+import type { LogEntry } from '../../messages';
 
 /**
  * Build the `lastEntries` array for an agent card preview.

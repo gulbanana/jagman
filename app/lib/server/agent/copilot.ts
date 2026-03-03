@@ -4,17 +4,17 @@ import {
 	type SessionMetadata,
 	type SessionEvent
 } from '@github/copilot-sdk';
-import type { Agent } from './agent';
-import type { AgentBrand } from '../brands';
+import type { Agent } from '.';
+import type { AgentBrand } from '../../brands';
 import type {
 	AgentDetail,
 	AgentRepoSummary,
 	AgentRepoSessionSummary,
 	LogEntry,
 	SessionMode
-} from '../messages';
+} from '../../messages';
 import { buildLastEntries } from './last-entries';
-import { getAgentProcesses, getWorkspacesWithAgent, markExternalSessions } from './processes';
+import { getAgentProcesses, getWorkspacesWithAgent, markExternalSessions } from '../processes';
 import { initService } from '$lib/server/state';
 
 /**
