@@ -16,8 +16,11 @@
         | { kind: "agent"; brand: AgentBrand; id: string }
         | { kind: "repo"; path: string };
 
-    const repos = $derived(await getRepos());
-    const cards = $derived(await getAttentionCards());
+    const reposPromise = $derived(getRepos());
+    const cardsPromise = $derived(getAttentionCards());
+
+    const repos = $derived(await reposPromise);
+    const cards = $derived(await cardsPromise);
 
     let selection: Selection | null = $state(null);
 
