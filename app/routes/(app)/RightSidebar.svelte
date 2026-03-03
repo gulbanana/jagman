@@ -37,7 +37,7 @@
 
 <div class="sidebar">
 	<div class="feed" use:overflowing>
-		{#each entries as entry (entry.timestamp)}
+		{#each entries as entry (entry.id)}
 			<div class="entry">
 				<picture class="icon">
 					<source

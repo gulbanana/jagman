@@ -76,7 +76,7 @@
 
 <div class="layout">
     <AttentionBar>
-        {#each cards as card (card.type)}
+        {#each cards as card, i (i)}
             {#if card.type === "permission-command"}
                 <AttentionCard
                     kind="Permission"

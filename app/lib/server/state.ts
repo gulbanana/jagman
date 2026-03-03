@@ -8,6 +8,7 @@ type Listener = () => void;
 type CleanupFn = () => void | Promise<void>;
 
 type HmrState = {
+	nextActivityId: number;
 	entries: ActivityEntry[];
 	listeners: Set<Listener>;
 	cleanupHooks: Map<string, CleanupFn>;
@@ -20,6 +21,7 @@ type HmrState = {
 const KEY = Symbol.for("__jagman_state__");
 const g = globalThis as unknown as Record<symbol, HmrState>;
 const state: HmrState = (g[KEY] ??= {
+	nextActivityId: 1,
 	entries: [],
 	listeners: new Set(),
 	cleanupHooks: new Map(),
@@ -29,8 +31,8 @@ const state: HmrState = (g[KEY] ??= {
 	started: false,
 });
 
-export function pushActivity(entry: Omit<ActivityEntry, "timestamp">): void {
-	state.entries.push({ ...entry, timestamp: Date.now() });
+export function pushActivity(entry: Omit<ActivityEntry, "id" | "timestamp">): void {
+	state.entries.push({ ...entry, id: state.nextActivityId++, timestamp: Date.now() });
 	for (const listener of state.listeners) {
 		listener();
 	}
