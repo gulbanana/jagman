@@ -16,13 +16,21 @@ import { getAgentProcesses, getWorkspacesWithAgent, markExternalSessions } from 
 /**
  * Server lifecycle management.
  *
- * The OpenCode server supports multi-directory operation via a per-client
- * `directory` header. JAGMAN starts a single server process and creates
- * one client per project directory to scope requests appropriately.
+ * JAGMAN starts a single OpenCode server process and creates one SDK
+ * client per project directory. The SDK's `createOpencodeClient` stamps
+ * every request with an `x-opencode-directory` header, which the server
+ * uses to establish an Instance context (project, config, VCS, etc.).
  *
- * NOTE: The one-server, one-client-per-directory split may not be right.
- * Session listing is global (we filter client-side), so multiple clients
- * may be unnecessary — or we may eventually want one per *workspace*.
+ * Directory scoping: OpenCode derives its internal project ID from the
+ * git root commit, so repos without git (e.g. jj-only) all collapse
+ * into a single global project. This means the header-based Instance
+ * context alone does NOT isolate collection queries like session.list()
+ * or session.status(). To get correct per-directory results we pass
+ * the `directory` query parameter explicitly — the server uses it as
+ * a direct DB filter in addition to the Instance-level project scope.
+ * By-ID operations (session.get, session.messages, session.prompt,
+ * permission responses, etc.) work fine without it since they look up
+ * by unique session ID.
  *
  * We spawn the server process ourselves rather than using the SDK's
  * `createOpencodeServer`, because the SDK uses `spawn('opencode', ...)`
@@ -161,19 +169,17 @@ export default class OpenCodeAgent implements Agent {
 		const client = await getClient(repoPath);
 
 		const [sessionsList, statusMap, vcsInfo] = await Promise.all([
-			client.session.list().then((r) => r.data ?? []),
 			client.session
-				.status()
+				.list({ query: { directory: repoPath } })
+				.then((r) => r.data ?? []),
+			client.session
+				.status({ query: { directory: repoPath } })
 				.then((r) => (r.data ?? {}) as Record<string, OcSessionStatus>),
 			client.vcs.get().then((r) => r.data ?? { branch: 'HEAD' })
 		]);
 
-		const repoSessions = sessionsList.filter(
-			(s) => s.directory.toLowerCase() === repoPath.toLowerCase()
-		);
-
-		repoSessions.sort((a, b) => b.time.updated - a.time.updated);
-		const recentSessions = repoSessions.slice(0, maxSessions);
+		sessionsList.sort((a, b) => b.time.updated - a.time.updated);
+		const recentSessions = sessionsList.slice(0, maxSessions);
 
 		const sessions = await Promise.all(
 			recentSessions.map((session) =>
