@@ -41,12 +41,15 @@ import { initService } from '$lib/server/state';
 
 type OcState = {
 	serverHandle: { url: string; proc: ChildProcess } | null;
+	/** Coalesces concurrent ensureServer() calls so only one spawn occurs. */
+	serverPending: Promise<string> | null;
 	clients: Map<string, OpencodeClient>;
 	sessionRepoCache: Map<string, string>;
 };
 
 const oc = initService<OcState>('opencode', () => ({
 	serverHandle: null,
+	serverPending: null,
 	clients: new Map(),
 	sessionRepoCache: new Map(),
 }), (s) => {
@@ -54,6 +57,7 @@ const oc = initService<OcState>('opencode', () => ({
 		s.serverHandle.proc.kill();
 		s.serverHandle = null;
 	}
+	s.serverPending = null;
 	s.clients.clear();
 	s.sessionRepoCache.clear();
 });
@@ -64,69 +68,86 @@ export function stopServer(): void {
 		oc.serverHandle.proc.kill();
 		oc.serverHandle = null;
 	}
+	oc.serverPending = null;
 	oc.clients.clear();
 	oc.sessionRepoCache.clear();
 }
 
 async function ensureServer(): Promise<string> {
-	if (!oc.serverHandle) {
-		const timeout = 5000;
-		const args = ['serve', '--hostname=127.0.0.1', '--port=0'];
-		const proc = spawn('opencode', args, {
-			shell: true,
-			env: {
-				...process.env,
-				OPENCODE_CONFIG_CONTENT: JSON.stringify({})
+	if (oc.serverHandle) return oc.serverHandle.url;
+
+	if (!oc.serverPending) {
+		oc.serverPending = spawnServer().then(
+			(handle) => {
+				oc.serverHandle = handle;
+				oc.serverPending = null;
+				return handle.url;
+			},
+			(err) => {
+				oc.serverPending = null;
+				throw err;
+			}
+		);
+	}
+	return oc.serverPending;
+}
+
+async function spawnServer(): Promise<{ url: string; proc: ChildProcess }> {
+	const timeout = 5000;
+	const args = ['serve', '--hostname=127.0.0.1', '--port=0'];
+	const proc = spawn('opencode', args, {
+		shell: true,
+		env: {
+			...process.env,
+			OPENCODE_CONFIG_CONTENT: JSON.stringify({})
+		}
+	});
+
+	const url = await new Promise<string>((resolve, reject) => {
+		const id = setTimeout(() => {
+			reject(new Error(`Timeout waiting for opencode server to start after ${timeout}ms`));
+		}, timeout);
+
+		let output = '';
+
+		proc.stdout?.on('data', (chunk: Buffer) => {
+			output += chunk.toString();
+			const lines = output.split('\n');
+			for (const line of lines) {
+				if (line.startsWith('opencode server listening')) {
+					const match = line.match(/on\s+(https?:\/\/[^\s]+)/);
+					if (!match) {
+						clearTimeout(id);
+						reject(new Error(`Failed to parse server url from output: ${line}`));
+						return;
+					}
+					clearTimeout(id);
+					resolve(match[1]);
+					return;
+				}
 			}
 		});
 
-		const url = await new Promise<string>((resolve, reject) => {
-			const id = setTimeout(() => {
-				reject(new Error(`Timeout waiting for opencode server to start after ${timeout}ms`));
-			}, timeout);
-
-			let output = '';
-
-			proc.stdout?.on('data', (chunk: Buffer) => {
-				output += chunk.toString();
-				const lines = output.split('\n');
-				for (const line of lines) {
-					if (line.startsWith('opencode server listening')) {
-						const match = line.match(/on\s+(https?:\/\/[^\s]+)/);
-						if (!match) {
-							clearTimeout(id);
-							reject(new Error(`Failed to parse server url from output: ${line}`));
-							return;
-						}
-						clearTimeout(id);
-						resolve(match[1]);
-						return;
-					}
-				}
-			});
-
-			proc.stderr?.on('data', (chunk: Buffer) => {
-				output += chunk.toString();
-			});
-
-			proc.on('exit', (code) => {
-				clearTimeout(id);
-				let msg = `opencode server exited with code ${code}`;
-				if (output.trim()) {
-					msg += `\nServer output: ${output}`;
-				}
-				reject(new Error(msg));
-			});
-
-			proc.on('error', (error) => {
-				clearTimeout(id);
-				reject(error);
-			});
+		proc.stderr?.on('data', (chunk: Buffer) => {
+			output += chunk.toString();
 		});
 
-		oc.serverHandle = { url, proc };
-	}
-	return oc.serverHandle.url;
+		proc.on('exit', (code) => {
+			clearTimeout(id);
+			let msg = `opencode server exited with code ${code}`;
+			if (output.trim()) {
+				msg += `\nServer output: ${output}`;
+			}
+			reject(new Error(msg));
+		});
+
+		proc.on('error', (error) => {
+			clearTimeout(id);
+			reject(error);
+		});
+	});
+
+	return { url, proc };
 }
 
 async function getClient(directory: string): Promise<OpencodeClient> {

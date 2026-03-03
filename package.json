@@ -53,7 +53,7 @@
 	"scripts": {
 		"build:native": "napi build --release --platform --esm",
 		"build:native:debug": "napi build --platform --esm",
-		"dev": "vite dev",
+		"dev": "vite dev --open",
 		"build": "npm run build:native && vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
