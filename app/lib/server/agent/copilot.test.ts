@@ -61,7 +61,7 @@ describe('CopilotAgent', () => {
 
 	it('implements the Agent interface', () => {
 		const agent = new CopilotAgent();
-		expect(agent.loadRepos).toBeTypeOf('function');
+		expect(agent.loadSessions).toBeTypeOf('function');
 		expect(agent.loadSession).toBeTypeOf('function');
 	});
 });

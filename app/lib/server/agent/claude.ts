@@ -202,7 +202,7 @@ async function readProjectSessions(
  * then falls back to a filename-based scan (Claude Code names files `<sessionId>.jsonl`).
  */
 async function findSessionFile(sessionId: string): Promise<string | null> {
-	// Fast path: check cache (populated during loadRepos → readProjectSessions)
+	// Fast path: check cache (populated during loadSessions → readProjectSessions)
 	const cached = sessionFileCache.get(sessionId);
 	if (cached) return cached;
 
@@ -233,11 +233,11 @@ async function findSessionFile(sessionId: string): Promise<string | null> {
 export default class ClaudeAgent implements Agent {
 	brand: AgentBrand = 'cc';
 
-	async loadRepos(repoPaths: string[], maxSessions: number): Promise<AgentRepoSummary[]> {
+	async loadSessions(workspacePaths: string[], maxSessions: number): Promise<AgentRepoSummary[]> {
 		const index = await getProjectIndex();
 
 		const repos = await Promise.all(
-			repoPaths.map(async (repoPath) => {
+			workspacePaths.map(async (repoPath) => {
 				const projectDirName = index.get(repoPath.toLowerCase());
 				if (!projectDirName) {
 					return { path: repoPath, branch: 'HEAD', sessions: [] };

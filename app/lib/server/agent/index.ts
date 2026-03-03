@@ -9,7 +9,7 @@ import { listRepositories } from "../db/repository";
 
 export interface Agent {
 	brand: AgentBrand;
-	loadRepos(repoPaths: string[], maxSessions: number): Promise<AgentRepoSummary[]>;
+	loadSessions(workspacePaths: string[], maxSessions: number): Promise<AgentRepoSummary[]>;
 	loadSession(id: string): Promise<Omit<AgentDetail, 'brand'> | null>;
 }
 
@@ -42,21 +42,23 @@ export async function getRepoSummary(repoPath: string): Promise<RepoSummary> {
 	const errors: RepoError[] = [];
 	let branch = '';
 
-	for (const agent of wellKnownAgents) {
-		let agentRepos: AgentRepoSummary[];
-		try {
-			agentRepos = await agent.loadRepos([repoPath], 10);
-		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error);
-			errors.push({ brand: agent.brand, message });
+	const results = await Promise.allSettled(
+		wellKnownAgents.map((agent) => agent.loadSessions([repoPath], 10))
+	);
+
+	for (let i = 0; i < results.length; i++) {
+		const result = results[i];
+		if (result.status === 'rejected') {
+			const message = result.reason instanceof Error ? result.reason.message : String(result.reason);
+			errors.push({ brand: wellKnownAgents[i].brand, message });
 			continue;
 		}
 
-		for (const repo of agentRepos) {
+		for (const repo of result.value) {
 			const brandedSessions = repo.sessions.map((s): RepoSessionSummary => ({
 				...s,
 				mode: s.status == 'inactive' ? null : s.mode,
-				brand: agent.brand,
+				brand: wellKnownAgents[i].brand,
 			}));
 			sessions.push(...brandedSessions);
 

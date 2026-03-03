@@ -20,7 +20,7 @@ Agent implementations (OpenCode, Claude, future agents) must not silently swallo
 
 The orchestration layer provides **per-agent isolation**: one agent failing does not prevent others from loading. When isolation requires catching an error internally, the error information must be **carried forward to the client** rather than logged to the server console. `console.error` is not a side channel the user can see — the dashboard is.
 
-`getAllRepos()` catches errors from each agent's `loadRepos()` individually and attaches them to the returned `Repo` objects as `errors: RepoError[]` (where `RepoError` carries the agent `brand` and error `message`). Because an agent-level failure affects all configured repos, the error is attached to every repo entry. Repo paths that had no successful data from any agent still get stub entries so the error is visible.
+`getAllRepos()` catches errors from each agent's `loadSessions()` individually and attaches them to the returned `Repo` objects as `errors: RepoError[]` (where `RepoError` carries the agent `brand` and error `message`). Because an agent-level failure affects all configured repos, the error is attached to every repo entry. Repo paths that had no successful data from any agent still get stub entries so the error is visible.
 
 The same pattern applies to `getAgentSession()` — each agent is tried in turn, failures are isolated, and the next agent gets a chance.
 

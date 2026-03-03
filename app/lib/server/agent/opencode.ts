@@ -187,8 +187,8 @@ function toTimestamp(ms: number): string {
 export default class OpenCodeAgent implements Agent {
 	brand: AgentBrand = 'oc';
 
-	async loadRepos(repoPaths: string[], maxSessions: number): Promise<AgentRepoSummary[]> {
-		const repos = await Promise.all(repoPaths.map((path) => this.loadRepo(path, maxSessions)));
+	async loadSessions(workspacePaths: string[], maxSessions: number): Promise<AgentRepoSummary[]> {
+		const repos = await Promise.all(workspacePaths.map((path) => this.loadRepo(path, maxSessions)));
 
 		const processes = await getAgentProcesses();
 		const activeWorkspaces = getWorkspacesWithAgent(

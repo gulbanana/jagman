@@ -73,12 +73,26 @@ function toArgs(value: unknown): Record<string, unknown> {
 export default class CopilotAgent implements Agent {
 	brand: AgentBrand = 'gc';
 
-	async loadRepos(repoPaths: string[], maxSessions: number): Promise<AgentRepoSummary[]> {
+	// The CopilotClient communicates over a single stdio pipe, and
+	// resumeSession/destroy pairs interfere when interleaved. Serialize
+	// loadSessions calls so concurrent getRepoSummary requests queue.
+	private pending: Promise<void> = Promise.resolve();
+
+	async loadSessions(workspacePaths: string[], maxSessions: number): Promise<AgentRepoSummary[]> {
+		const result = this.pending.then(
+			() => this.doLoadSessions(workspacePaths, maxSessions),
+			() => this.doLoadSessions(workspacePaths, maxSessions),
+		);
+		this.pending = result.then(() => {}, () => {});
+		return result;
+	}
+
+	private async doLoadSessions(workspacePaths: string[], maxSessions: number): Promise<AgentRepoSummary[]> {
 		const client = await ensureClient();
 		const allSessions = await client.listSessions();
 
 		const repos = await Promise.all(
-			repoPaths.map((repoPath) =>
+			workspacePaths.map((repoPath) =>
 				this.loadRepo(client, allSessions, repoPath, maxSessions)
 			)
 		);

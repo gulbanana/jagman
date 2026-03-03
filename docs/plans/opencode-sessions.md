@@ -24,12 +24,12 @@ export const REPO_PATHS = [
 
 ### 2. Modify Agent interface in `agent.ts`
 
-Change `loadRepos()` to receive repo paths as a parameter:
+Change `loadSessions()` to receive repo paths as a parameter:
 
 ```typescript
 export interface Agent {
     brand: AgentBrand;
-    loadRepos(repoPaths: string[]): Promise<AgentRepo[]>;
+    loadSessions(workspacePaths: string[]): Promise<AgentRepo[]>;
     loadSession(id: string): Promise<Omit<AgentSession, 'brand'> | null>;
 }
 ```
@@ -38,7 +38,7 @@ Update `getAllRepos()` to import from config and pass paths to each agent.
 
 ### 3. Update ClaudeAgent in `claude.ts`
 
-Remove the `REPO_PATHS` constant and accept it as a parameter to `loadRepos()`.
+Remove the `REPO_PATHS` constant and accept it as a parameter to `loadSessions()`.
 
 ### 4. Install SDK
 
@@ -50,11 +50,11 @@ npm install @opencode-ai/sdk
 
 **Server lifecycle management:**
 - Maintain a `Map<string, { client, server }>` keyed by repo path
-- On `loadRepos()`, for each repo path, start an OpenCode server via `createOpencode()` if not already running
+- On `loadSessions()`, for each repo path, start an OpenCode server via `createOpencode()` if not already running
 - Pass the `directory` query parameter on API calls to scope to each project
 - Store server handles for cleanup on shutdown
 
-**`loadRepos(repoPaths)`:**
+**`loadSessions(workspacePaths)`:**
 1. For each repo path, ensure a server is running and get its client
 2. Call `client.session.list()` for all sessions
 3. Get session statuses via `/session/status` endpoint
