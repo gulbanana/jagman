@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Icon from "$lib/Icon.svelte";
+    import FeatherIcon from "$lib/FeatherIcon.svelte";
     import Pane from "$lib/Pane.svelte";
     import { overflowing } from "$lib/overflowing";
     import { getRepoStubs, getAttentionItems } from "./data.remote";
@@ -17,6 +17,7 @@
     import ErrorSpan from "$lib/ErrorSpan.svelte";
     import IdentSpan from "$lib/IdentSpan.svelte";
     import type { Selection } from "./RepoColumn.svelte";
+    import BrandIcon from "$lib/BrandIcon.svelte";
 
     const repoPathsPromise = $derived(getRepoStubs());
     const itemsPromise = $derived(getAttentionItems());
@@ -89,9 +90,7 @@
     const detailIcon = $derived.by(() => {
         const s = selection;
         if (!s) return null;
-        return s.kind === "agent"
-            ? { kind: "brand" as const, ...brandIcons[s.brand] }
-            : { kind: "feather" as const, name: "git-branch" };
+        return s.kind === "agent" ? "user" : "git-branch";
     });
 
     function selectAgent(brand: AgentBrand, id: string, title: string) {
@@ -104,7 +103,11 @@
 
     function handleAttentionSelect(item: AttentionItem) {
         if (item.detail.type === "idle-prompt") {
-            selectAgent(item.detail.agent.brand, item.detail.agent.id, item.detail.agent.title);
+            selectAgent(
+                item.detail.agent.brand,
+                item.detail.agent.id,
+                item.detail.agent.title,
+            );
         }
     }
 
@@ -155,6 +158,7 @@
                             {#snippet pending()}
                                 <RepoCard
                                     displayPath={stub.displayPath}
+                                    repoPath={stub.path}
                                     selected={repoSelected}
                                     onclick={() =>
                                         selectRepo(stub.displayPath)} />
@@ -162,6 +166,7 @@
                             {#snippet failed(error)}
                                 <RepoCard
                                     displayPath={stub.displayPath}
+                                    repoPath={stub.path}
                                     selected={repoSelected}
                                     onclick={() =>
                                         selectRepo(stub.displayPath)} />
@@ -182,21 +187,12 @@
         <div class="detail">
             <Pane flush={selection?.kind === "repo"}>
                 {#snippet header()}
-                    {#if detailIcon?.kind === "brand"}
-                        <picture>
-                            <source
-                                srcset={detailIcon.dark}
-                                media="(prefers-color-scheme: dark)" />
-                            <img
-                                src={detailIcon.light}
-                                alt="repository"
-                                width="16"
-                                height="16" />
-                        </picture>
-                    {:else if detailIcon?.kind === "feather"}
-                        <Icon name={detailIcon.name} />
+                    {#if detailIcon}
+                        <div class="detail-header">
+                            <FeatherIcon name={detailIcon} />
+                            <IdentSpan text={detailLabel} />
+                        </div>
                     {/if}
-                    <div><IdentSpan>{detailLabel}</IdentSpan></div>
                 {/snippet}
                 <div class="iframe-container">
                     <iframe
@@ -205,6 +201,8 @@
                         onload={() => (iframeLoading = false)}></iframe>
                     {#if iframeLoading}
                         <div class="iframe-overlay">Loading...</div>
+                    {:else if selection?.kind == "agent"}
+                        <BrandIcon brand={selection.brand} />
                     {/if}
                 </div>
             </Pane>
@@ -268,10 +266,23 @@
         flex: 1;
     }
 
+    .detail-header {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: auto 1fr;
+        overflow: hidden;
+    }
+
     .iframe-container {
         position: relative;
         width: 100%;
         height: 100%;
+
+        & > :global(picture) {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+        }
     }
 
     .detail iframe {

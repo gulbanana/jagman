@@ -118,7 +118,7 @@
 
 	.header {
 		height: 32px;
-		padding: 8px 16px;
+		padding: 8px;
 		overflow: hidden;
 
 		border-bottom: 1px solid var(--ctp-overlay0);

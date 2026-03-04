@@ -64,6 +64,7 @@ export type LaunchPromptDetail = {
 	type: "launch-prompt";
 	repoPath: string;
 	displayPath: string;
+	brand: AgentBrand;
 };
 
 export type IdlePromptDetail = {

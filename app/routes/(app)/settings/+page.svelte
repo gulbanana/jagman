@@ -64,7 +64,7 @@
 				{:else}
 					{#each data.repositories as repo (repo.id)}
 						<Unbox>
-							<IdentSpan>{repo.path}</IdentSpan>
+							<IdentSpan text={repo.path} />
 						</Unbox>
 						<form method="POST" action="?/removeRepository">
 							<input type="hidden" name="id" value={repo.id} />

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ActButton from "$lib/ActButton.svelte";
 	import ErrorSpan from "$lib/ErrorSpan.svelte";
 	import IdentSpan from "$lib/IdentSpan.svelte";
 	import Pane from "$lib/Pane.svelte";
@@ -6,15 +7,26 @@
 
 	let {
 		displayPath,
+		repoPath = null,
 		selected = false,
 		repo = null,
 		onclick,
 	}: {
 		displayPath: string;
+		repoPath?: string | null;
 		selected?: boolean;
 		repo?: RepoSummary | null;
 		onclick: () => void;
 	} = $props();
+
+	function launchPrompt() {
+		if (!repoPath) return;
+		fetch("/attention/launch", {
+			method: "POST",
+			body: JSON.stringify({ repoPath }),
+			headers: { "Content-Type": "application/json" },
+		});
+	}
 
 	const modeRank: Record<SessionMode, number> = {
 		plan: 1,
@@ -50,12 +62,17 @@
 <button class="repo-header" class:selected {onclick}>
 	<Pane stackedBelow>
 		{#snippet header()}
-			<div
-				class="repo-name"
-				class:standard={greatestMode === "standard"}
-				class:plan={greatestMode === "plan"}
-				class:yolo={greatestMode === "yolo"}>
-				<IdentSpan>{displayPath}</IdentSpan>
+			<div class="header-layout">
+				<div
+					class="repo-name"
+					class:standard={greatestMode === "standard"}
+					class:plan={greatestMode === "plan"}
+					class:yolo={greatestMode === "yolo"}>
+					<IdentSpan text={displayPath} />
+				</div>
+				{#if repoPath}
+					<ActButton name="user-plus" onclick={launchPrompt} />
+				{/if}
 			</div>
 		{/snippet}
 		{#if repo}
@@ -114,6 +131,9 @@
 	}
 
 	.repo-name {
+		flex: 1;
+		min-width: 0;
+
 		&.standard {
 			color: var(--ctp-peach);
 		}
@@ -179,5 +199,12 @@
 		justify-content: center;
 		font-family: var(--ff-ui);
 		color: var(--ctp-subtext0);
+	}
+
+	.header-layout {
+		flex: 1;
+		display: grid;
+		grid-template-columns: 1fr auto;
+		justify-items: start;
 	}
 </style>

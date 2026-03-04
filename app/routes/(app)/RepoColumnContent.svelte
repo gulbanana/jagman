@@ -35,7 +35,7 @@
 	});
 </script>
 
-<RepoCard displayPath={stub.displayPath} {repo} selected={repoSelected} onclick={onselectrepo} />
+<RepoCard displayPath={stub.displayPath} repoPath={stub.path} {repo} selected={repoSelected} onclick={onselectrepo} />
 {#each repo.sessions as session (session.id)}
 	<AgentCard
 		{session}

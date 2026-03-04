@@ -38,6 +38,11 @@
         &:hover {
             border-color: var(--ctp-lavender);
         }
+
+        &:active {
+            background-color: var(--ctp-lavender);
+            color: var(--ctp-base);
+        }
     }
 
     .confirm {

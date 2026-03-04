@@ -1,17 +1,8 @@
 <script lang="ts">
 	import { overflowing } from "$lib/overflowing";
-	import { brandIcons } from "$lib/brands";
-	import type { ActivitySource } from "$lib/activity";
-	import jgLight from "$lib/assets/jg-light.svg";
-	import jgDark from "$lib/assets/jg-dark.svg";
 	import EventHeader from "$lib/EventHeader.svelte";
 	import { getActivity } from "./data.remote";
-
-	const sourceIcons: Record<ActivitySource, { light: string; dark: string }> =
-		{
-			...brandIcons,
-			jg: { light: jgLight, dark: jgDark },
-		};
+	import BrandIcon from "$lib/BrandIcon.svelte";
 
 	const entries = $derived(await getActivity());
 
@@ -39,16 +30,7 @@
 	<div class="feed" use:overflowing>
 		{#each entries as entry (entry.id)}
 			<div class="entry">
-				<picture class="icon">
-					<source
-						srcset={sourceIcons[entry.source].dark}
-						media="(prefers-color-scheme: dark)" />
-					<img
-						src={sourceIcons[entry.source].light}
-						alt={entry.source}
-						width="16"
-						height="16" />
-				</picture>
+				<BrandIcon brand={entry.source} />
 				<EventHeader>{entry.event}</EventHeader>
 				<span class="detail">
 					{formatTime(entry.timestamp)}
@@ -97,7 +79,7 @@
 		gap: 2px;
 	}
 
-	.icon {
+	.entry > :global(:first-child) {
 		grid-row: 1;
 		grid-column: 1;
 		display: flex;

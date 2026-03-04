@@ -23,7 +23,7 @@ export function configuredAgents(): Agent[] {
 
 const HOME = homedir();
 
-function toDisplayPath(path: string): string {
+export function toDisplayPath(path: string): string {
 	if (path.toLowerCase().startsWith(HOME.toLowerCase())) {
 		return '~' + path.slice(HOME.length);
 	}

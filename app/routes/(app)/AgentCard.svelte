@@ -7,6 +7,7 @@
 		RepoSessionSummary,
 		UserEntry,
 	} from "$lib/messages";
+	import BrandIcon from "$lib/BrandIcon.svelte";
 
 	let {
 		session,
@@ -62,16 +63,7 @@
 		animated={session.status === "running" ||
 			session.status === "external"}>
 		<div class="layout">
-			<picture class="brand">
-				<source
-					srcset={brandIcons[session.brand].dark}
-					media="(prefers-color-scheme: dark)" />
-				<img
-					src={brandIcons[session.brand].light}
-					alt={brandNames[session.brand]}
-					width="16"
-					height="16" />
-			</picture>
+			<BrandIcon brand={session.brand} />
 			{#if session.lastEntries.length > 0}
 				<div class="details">
 					<LogView truncateUser log={cardEntries} />
@@ -119,7 +111,7 @@
 		gap: 8px;
 	}
 
-	.brand {
+	.layout > :global(:first-child) {
 		grid-area: brand;
 		align-self: end;
 	}

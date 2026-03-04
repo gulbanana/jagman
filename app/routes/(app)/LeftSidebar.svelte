@@ -1,11 +1,11 @@
 <script>
-    import Icon from "$lib/Icon.svelte";
+    import FeatherIcon from "$lib/FeatherIcon.svelte";
     import Logo from "./Logo.svelte";
 </script>
 
 <ul class="menu">
-    <li><a href="/"><Icon name="home" /> Dashboard</a></li>
-    <li><a href="/settings"><Icon name="settings" /> Settings</a></li>
+    <li><a href="/"><FeatherIcon name="home" /> Dashboard</a></li>
+    <li><a href="/settings"><FeatherIcon name="settings" /> Settings</a></li>
     <li><Logo /></li>
 </ul>
 

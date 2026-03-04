@@ -1,8 +1,9 @@
 - switch to local gg to validate workspace apis
+- attention empty state 
 - wide + concertina cards
-- card: prompt + config
-- card: prompt + changelist
+- finish card: prompt + config
+- finish card: prompt + changelist
 - Actually Launch Agent
 - takeover mode
-- RepoColumn vs RepoColumnContent vs lookless scrolling
+- RepoColumn vs RepoColumnContent vs lookless scrolling - animate addition?
 - refactor everything

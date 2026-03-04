@@ -2,14 +2,14 @@
     import type { Snippet } from "svelte";
 
     let {
-        children,
+        text,
     }: {
-        children: Snippet;
+        text: string;
     } = $props();
 </script>
 
-<span class="identifier">
-    {@render children()}
+<span class="identifier" title={text}>
+    {text}
 </span>
 
 <style>

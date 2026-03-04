@@ -2,7 +2,8 @@ import { integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core
 
 export const repository = sqliteTable('repository', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
-	path: text('path').notNull()
+	path: text('path').notNull(),
+	lastAgentBrand: text('last_agent_brand').notNull().default('cc')
 }, (table) => [
 	uniqueIndex('repository_path_unique').on(table.path)
 ]);

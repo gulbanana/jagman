@@ -6,6 +6,7 @@ import { repository } from './schema';
 export type RepositoryRecord = {
 	id: number;
 	path: string;
+	lastAgentBrand: string;
 };
 
 const REQUIRED_TABLES = ['repository', 'workspace'] as const;
@@ -46,11 +47,19 @@ export function listRepositories(): RepositoryRecord[] {
 	return db
 		.select({
 			id: repository.id,
-			path: repository.path
+			path: repository.path,
+			lastAgentBrand: repository.lastAgentBrand
 		})
 		.from(repository)
 		.orderBy(asc(repository.path))
 		.all();
+}
+
+export function getRepositoryByPath(path: string): RepositoryRecord | null {
+	if (!getDatabaseStatus().migrated) return null;
+	return listRepositories().find(
+		(repo) => normalizeForCompare(repo.path) === normalizeForCompare(path)
+	) ?? null;
 }
 
 export function addRepository(path: string): void {

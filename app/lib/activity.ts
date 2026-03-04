@@ -1,10 +1,8 @@
-import type { AgentBrand } from "./brands";
-
-export type ActivitySource = AgentBrand | "jg";
+import type { IconBrand } from "./brands";
 
 export type ActivityEntry = {
 	id: number;
-	source: ActivitySource;
+	source: IconBrand;
 	event: string;
 	detail: string;
 	timestamp: number;

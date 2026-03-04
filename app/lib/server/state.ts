@@ -60,7 +60,7 @@ export function subscribeActivity(listener: Listener): () => void {
 
 export function pushAttention(detail: AttentionDetail): AttentionItem {
 	const item: AttentionItem = { id: state.nextAttentionId++, detail };
-	state.attentionItems.push(item);
+	state.attentionItems.unshift(item);
 	for (const listener of state.attentionListeners) {
 		listener();
 	}
@@ -119,7 +119,7 @@ export function initService<T extends object>(
 	const svc = init();
 	state.services.set(name, svc);
 	onShutdown(name, () => cleanup(svc), options);
-	pushActivity({ source: "jg", event: name, detail: "service started" });
+	pushActivity({ source: "jm", event: name, detail: "service started" });
 	return svc;
 }
 
@@ -144,8 +144,4 @@ export async function shutdown(): Promise<never> {
 	process.exit(0);
 }
 
-initService("JAGMAN", () => {
-	// TODO: remove — temporary test data
-	pushAttention({ type: "launch-prompt", repoPath: "/home/user/projects/test-repo", displayPath: "~/projects/test-repo" });
-	return {};
-}, _ => { });
+initService("JAGMAN", () => ({}), () => { });
