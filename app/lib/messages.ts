@@ -58,15 +58,23 @@ export type AgentDetail = {
 	log: LogEntry[];
 };
 
-/* notification data */
+/* attention items */
 
-export type AttentionType = "permission-command" | "permission-edit" | "review";
+export type LaunchPromptDetail = {
+	type: "launch-prompt";
+	repoPath: string;
+	displayPath: string;
+};
 
-export type PromptDetail = {
+export type IdlePromptDetail = {
 	type: "idle-prompt";
 	agent: RepoSessionSummary;
-}
+	displayPath: string;
+};
 
-export type AttentionDetail = PromptDetail | {
-	type: AttentionType;
+export type AttentionDetail = LaunchPromptDetail | IdlePromptDetail;
+
+export type AttentionItem = {
+	id: number;
+	detail: AttentionDetail;
 };

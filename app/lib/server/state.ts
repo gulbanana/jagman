@@ -1,4 +1,5 @@
 import type { ActivityEntry } from "../activity";
+import type { AttentionDetail, AttentionItem } from "../messages";
 
 // Preserve in-memory state across Vite HMR reloads by stashing it on globalThis.
 // Without this, every server-side module re-evaluation resets arrays/sets to empty,
@@ -11,6 +12,9 @@ type HmrState = {
 	nextActivityId: number;
 	entries: ActivityEntry[];
 	listeners: Set<Listener>;
+	nextAttentionId: number;
+	attentionItems: AttentionItem[];
+	attentionListeners: Set<Listener>;
 	cleanupHooks: Map<string, CleanupFn>;
 	lateCleanupHooks: Map<string, CleanupFn>;
 	services: Map<string, object>;
@@ -24,6 +28,9 @@ const state: HmrState = (g[KEY] ??= {
 	nextActivityId: 1,
 	entries: [],
 	listeners: new Set(),
+	nextAttentionId: 1,
+	attentionItems: [],
+	attentionListeners: new Set(),
 	cleanupHooks: new Map(),
 	lateCleanupHooks: new Map(),
 	services: new Map(),
@@ -46,6 +53,38 @@ export function subscribeActivity(listener: Listener): () => void {
 	state.listeners.add(listener);
 	return () => {
 		state.listeners.delete(listener);
+	};
+}
+
+// --- Attention state ---
+
+export function pushAttention(detail: AttentionDetail): AttentionItem {
+	const item: AttentionItem = { id: state.nextAttentionId++, detail };
+	state.attentionItems.push(item);
+	for (const listener of state.attentionListeners) {
+		listener();
+	}
+	return item;
+}
+
+export function resolveAttention(id: number): boolean {
+	const index = state.attentionItems.findIndex((item) => item.id === id);
+	if (index === -1) return false;
+	state.attentionItems.splice(index, 1);
+	for (const listener of state.attentionListeners) {
+		listener();
+	}
+	return true;
+}
+
+export function getAttention(): AttentionItem[] {
+	return state.attentionItems.slice();
+}
+
+export function subscribeAttention(listener: Listener): () => void {
+	state.attentionListeners.add(listener);
+	return () => {
+		state.attentionListeners.delete(listener);
 	};
 }
 
@@ -105,4 +144,8 @@ export async function shutdown(): Promise<never> {
 	process.exit(0);
 }
 
-initService("JAGMAN", () => ({}), _ => { });
+initService("JAGMAN", () => {
+	// TODO: remove — temporary test data
+	pushAttention({ type: "launch-prompt", repoPath: "/home/user/projects/test-repo", displayPath: "~/projects/test-repo" });
+	return {};
+}, _ => { });

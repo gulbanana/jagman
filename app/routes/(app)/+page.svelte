@@ -2,29 +2,27 @@
     import Icon from "$lib/Icon.svelte";
     import Pane from "$lib/Pane.svelte";
     import { overflowing } from "$lib/overflowing";
-    import { getRepoStubs, getAttentionCards } from "./data.remote";
+    import { getRepoStubs, getAttentionItems } from "./data.remote";
     import {
         ActiveOrder,
         activeFirstCompare,
         type RepoActivitySignal,
     } from "$lib/activity";
     import { brandIcons, type AgentBrand } from "$lib/brands";
+    import type { AttentionItem } from "$lib/messages";
     import AttentionBar from "./AttentionBar.svelte";
-    import AttentionCard from "./AttentionCard.svelte";
     import RepoColumn from "./RepoColumn.svelte";
     import RepoCard from "./RepoCard.svelte";
     import RepoColumnContent from "./RepoColumnContent.svelte";
-    import ControlButton from "$lib/ControlButton.svelte";
     import ErrorSpan from "$lib/ErrorSpan.svelte";
     import IdentSpan from "$lib/IdentSpan.svelte";
     import type { Selection } from "./RepoColumn.svelte";
-    import TextArea from "$lib/TextArea.svelte";
 
     const repoPathsPromise = $derived(getRepoStubs());
-    const cardsPromise = $derived(getAttentionCards());
+    const itemsPromise = $derived(getAttentionItems());
 
     const repoPaths = $derived(await repoPathsPromise);
-    const cards = $derived(await cardsPromise);
+    const items = $derived(await itemsPromise);
 
     let selection: Selection | null = $state(null);
 
@@ -104,6 +102,12 @@
         selection = { kind: "repo", path };
     }
 
+    function handleAttentionSelect(item: AttentionItem) {
+        if (item.detail.type === "idle-prompt") {
+            selectAgent(item.detail.agent.brand, item.detail.agent.id, item.detail.agent.title);
+        }
+    }
+
     let iframeLoading = $state(false);
 
     $effect(() => {
@@ -117,86 +121,22 @@
             selection = { kind: "repo", path: repoPaths[0].displayPath };
         }
     });
+
+    $effect(() => {
+        const source = new EventSource("/attention");
+
+        source.addEventListener("attention", () => {
+            getAttentionItems().refresh();
+        });
+
+        return () => {
+            source.close();
+        };
+    });
 </script>
 
 <div class="layout">
-    <AttentionBar>
-        {#each cards as card, i (i)}
-            {#if card.type === "permission-command"}
-                <AttentionCard
-                    kind="Permission"
-                    title="opencode-3 wants to run a command"
-                    description="~/projects/api-server">
-                    <pre class="mock-command">npm test</pre>
-                    <div class="mock-actions">
-                        <ControlButton intent="confirm">Approve</ControlButton>
-                        <ControlButton>Deny</ControlButton>
-                    </div>
-                </AttentionCard>
-            {:else if card.type === "permission-edit"}
-                <AttentionCard
-                    kind="Permission"
-                    title="opencode-1 wants to edit a file"
-                    description="~/projects/webapp">
-                    <pre class="mock-diff"><span class="mock-diff-file"
-                            >src/lib/api.ts</span>
-<span class="mock-diff-del">- const timeout = 5000;</span>
-<span class="mock-diff-add">+ const timeout = 30000;</span></pre>
-                    <div class="mock-actions">
-                        <ControlButton intent="confirm">Approve</ControlButton>
-                        <ControlButton>Deny</ControlButton>
-                    </div>
-                </AttentionCard>
-            {:else if card.type === "idle-prompt"}
-                <AttentionCard
-                    kind="Prompt"
-                    title="New task for api-server"
-                    description="claude-12 · ~/projects/api-server">
-                    <TextArea name="mock" placeholder="enter a prompt"
-                    ></TextArea>
-
-                    <!-- <textarea
-                        class="mock-input"
-                        placeholder="Enter a prompt for the agent..."
-                        >Add rate limiting to public endpoints</textarea> -->
-                    <div class="mock-actions">
-                        <ControlButton intent="confirm">Launch</ControlButton>
-                    </div>
-                </AttentionCard>
-            {:else if card.type === "review"}
-                <AttentionCard
-                    kind="Review"
-                    title="claude-7 finished a task"
-                    description="~/projects/api-server · 3 files changed">
-                    <div class="mock-review">
-                        <div class="mock-review-file">
-                            <span class="mock-review-name"
-                                >src/middleware/rateLimit.ts</span>
-                            <span class="mock-review-stat mock-diff-add"
-                                >+48</span>
-                        </div>
-                        <div class="mock-review-file">
-                            <span class="mock-review-name"
-                                >src/routes/index.ts</span>
-                            <span class="mock-review-stat mock-diff-add"
-                                >+4</span>
-                            <span class="mock-review-stat mock-diff-del"
-                                >−2</span>
-                        </div>
-                        <div class="mock-review-file">
-                            <span class="mock-review-name">src/config.ts</span>
-                            <span class="mock-review-stat mock-diff-add"
-                                >+1</span>
-                        </div>
-                    </div>
-                    <div class="mock-actions">
-                        <ControlButton intent="confirm">Accept</ControlButton>
-                        <ControlButton>Reject</ControlButton>
-                    </div>
-                </AttentionCard>
-            {/if}
-        {/each}
-    </AttentionBar>
+    <AttentionBar {items} onselect={handleAttentionSelect} />
 
     <div class="bottom">
         <div class="repos" use:overflowing>
@@ -358,78 +298,5 @@
         padding: 32px;
         color: var(--ctp-subtext0);
         font-family: var(--ff-ui);
-    }
-
-    /* Mock attention card content */
-
-    .mock-command {
-        flex: 1;
-        margin: 0;
-        padding: 8px;
-        border-radius: 4px;
-        background: var(--ctp-mantle);
-        font-family: var(--ff-code);
-        font-size: 13px;
-        color: var(--ctp-text);
-        white-space: pre-wrap;
-    }
-
-    .mock-diff {
-        flex: 1;
-        margin: 0;
-        padding: 8px;
-        border-radius: 4px;
-        background: var(--ctp-mantle);
-        font-family: var(--ff-code);
-        font-size: 12px;
-        color: var(--ctp-text);
-        line-height: 1.4;
-        white-space: pre-wrap;
-    }
-
-    .mock-diff-file {
-        color: var(--ctp-subtext0);
-    }
-
-    .mock-diff-add {
-        color: var(--ctp-green);
-    }
-
-    .mock-diff-del {
-        color: var(--ctp-red);
-    }
-
-    .mock-review {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-    }
-
-    .mock-review-file {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-        padding: 4px 8px;
-        border-radius: 4px;
-        background: var(--ctp-mantle);
-        font-family: var(--ff-code);
-        font-size: 12px;
-    }
-
-    .mock-review-name {
-        flex: 1;
-        color: var(--ctp-text);
-    }
-
-    .mock-review-stat {
-        font-size: 11px;
-    }
-
-    .mock-actions {
-        display: flex;
-        justify-content: end;
-        gap: 8px;
-        margin-top: 8px;
     }
 </style>
