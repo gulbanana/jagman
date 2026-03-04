@@ -2,18 +2,20 @@
     import type { Snippet } from "svelte";
 
     interface Props {
-        intent: "approve" | "deny";
+        intent?: "confirm" | "override";
+        type?: "button" | "submit" | "reset" | undefined;
         onclick?: () => void;
         children: Snippet;
     }
 
-    let { intent, onclick, children }: Props = $props();
+    let { intent, type, onclick, children }: Props = $props();
 </script>
 
 <button
     class="control-button"
-    class:approve={intent === "approve"}
-    class:deny={intent === "deny"}
+    class:confirm={intent === "confirm"}
+    class:override={intent === "override"}
+    {type}
     {onclick}>
     {@render children()}
 </button>
@@ -29,23 +31,22 @@
 
         border: 2px solid transparent;
         border-radius: 4px;
-    }
 
-    .approve {
-        background: var(--ctp-green);
-        color: var(--ctp-base);
-
-        &:hover {
-            border-color: var(--ctp-surface1);
-        }
-    }
-
-    .deny {
         background: var(--ctp-surface1);
         color: var(--ctp-text);
 
         &:hover {
-            border-color: var(--ctp-text);
+            border-color: var(--ctp-lavender);
         }
+    }
+
+    .confirm {
+        background: var(--ctp-green);
+        color: var(--ctp-base);
+    }
+
+    .override {
+        background: var(--ctp-red);
+        color: var(--ctp-base);
     }
 </style>

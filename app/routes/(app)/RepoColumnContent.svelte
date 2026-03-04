@@ -9,12 +9,14 @@
 	let {
 		stub,
 		selectedAgentId,
+		repoSelected,
 		onloaded,
 		onselectrepo,
 		onselectagent,
 	}: {
 		stub: RepoStub;
 		selectedAgentId: string | null;
+		repoSelected: boolean;
 		onloaded: (signal: RepoActivitySignal) => void;
 		onselectrepo: () => void;
 		onselectagent: (brand: AgentBrand, id: string, title: string) => void;
@@ -33,7 +35,7 @@
 	});
 </script>
 
-<RepoCard displayPath={stub.displayPath} {repo} onclick={onselectrepo} />
+<RepoCard displayPath={stub.displayPath} {repo} selected={repoSelected} onclick={onselectrepo} />
 {#each repo.sessions as session (session.id)}
 	<AgentCard
 		{session}

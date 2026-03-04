@@ -1,6 +1,6 @@
 <script>
     import Icon from "$lib/Icon.svelte";
-    import Logo from "$lib/Logo.svelte";
+    import Logo from "./Logo.svelte";
 </script>
 
 <ul class="menu">

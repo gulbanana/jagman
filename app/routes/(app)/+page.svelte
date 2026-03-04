@@ -3,7 +3,11 @@
     import Pane from "$lib/Pane.svelte";
     import { overflowing } from "$lib/overflowing";
     import { getRepoStubs, getAttentionCards } from "./data.remote";
-    import { ActiveOrder, activeFirstCompare, type RepoActivitySignal } from "$lib/activity";
+    import {
+        ActiveOrder,
+        activeFirstCompare,
+        type RepoActivitySignal,
+    } from "$lib/activity";
     import { brandIcons, type AgentBrand } from "$lib/brands";
     import AttentionBar from "./AttentionBar.svelte";
     import AttentionCard from "./AttentionCard.svelte";
@@ -12,10 +16,9 @@
     import RepoColumnContent from "./RepoColumnContent.svelte";
     import ControlButton from "$lib/ControlButton.svelte";
     import ErrorSpan from "$lib/ErrorSpan.svelte";
-
-    type Selection =
-        | { kind: "agent"; brand: AgentBrand; id: string; title: string }
-        | { kind: "repo"; path: string };
+    import IdentSpan from "$lib/IdentSpan.svelte";
+    import type { Selection } from "./RepoColumn.svelte";
+    import TextArea from "$lib/TextArea.svelte";
 
     const repoPathsPromise = $derived(getRepoStubs());
     const cardsPromise = $derived(getAttentionCards());
@@ -32,7 +35,11 @@
 
     function handleRepoLoaded(signal: RepoActivitySignal) {
         const existing = repoSignals.get(signal.path);
-        if (existing && existing.active === signal.active && existing.timestamp === signal.timestamp) {
+        if (
+            existing &&
+            existing.active === signal.active &&
+            existing.timestamp === signal.timestamp
+        ) {
             return;
         }
         repoSignals.set(signal.path, signal);
@@ -52,7 +59,13 @@
         stubs.sort((a, b) => {
             const aTime = repoSignals.get(a.path)?.timestamp ?? 0;
             const bTime = repoSignals.get(b.path)?.timestamp ?? 0;
-            return activeFirstCompare(activeIndex, a.path, aTime, b.path, bTime);
+            return activeFirstCompare(
+                activeIndex,
+                a.path,
+                aTime,
+                b.path,
+                bTime,
+            );
         });
 
         return stubs;
@@ -116,8 +129,8 @@
                     description="~/projects/api-server">
                     <pre class="mock-command">npm test</pre>
                     <div class="mock-actions">
-                        <ControlButton intent="approve">Approve</ControlButton>
-                        <ControlButton intent="deny">Deny</ControlButton>
+                        <ControlButton intent="confirm">Approve</ControlButton>
+                        <ControlButton>Deny</ControlButton>
                     </div>
                 </AttentionCard>
             {:else if card.type === "permission-edit"}
@@ -130,8 +143,8 @@
 <span class="mock-diff-del">- const timeout = 5000;</span>
 <span class="mock-diff-add">+ const timeout = 30000;</span></pre>
                     <div class="mock-actions">
-                        <ControlButton intent="approve">Approve</ControlButton>
-                        <ControlButton intent="deny">Deny</ControlButton>
+                        <ControlButton intent="confirm">Approve</ControlButton>
+                        <ControlButton>Deny</ControlButton>
                     </div>
                 </AttentionCard>
             {:else if card.type === "idle-prompt"}
@@ -139,12 +152,15 @@
                     kind="Prompt"
                     title="New task for api-server"
                     description="claude-12 · ~/projects/api-server">
-                    <textarea
+                    <TextArea name="mock" placeholder="enter a prompt"
+                    ></TextArea>
+
+                    <!-- <textarea
                         class="mock-input"
                         placeholder="Enter a prompt for the agent..."
-                        >Add rate limiting to public endpoints</textarea>
+                        >Add rate limiting to public endpoints</textarea> -->
                     <div class="mock-actions">
-                        <ControlButton intent="approve">Launch</ControlButton>
+                        <ControlButton intent="confirm">Launch</ControlButton>
                     </div>
                 </AttentionCard>
             {:else if card.type === "review"}
@@ -174,8 +190,8 @@
                         </div>
                     </div>
                     <div class="mock-actions">
-                        <ControlButton intent="approve">Accept</ControlButton>
-                        <ControlButton intent="deny">Reject</ControlButton>
+                        <ControlButton intent="confirm">Accept</ControlButton>
+                        <ControlButton>Reject</ControlButton>
                     </div>
                 </AttentionCard>
             {/if}
@@ -185,34 +201,40 @@
     <div class="bottom">
         <div class="repos" use:overflowing>
             {#each sortedStubs as stub (stub.path)}
-                <RepoColumn>
-                    <svelte:boundary>
-                        <RepoColumnContent
-                            {stub}
-                            selectedAgentId={selection?.kind === "agent"
-                                ? selection.id
-                                : null}
-                            onloaded={handleRepoLoaded}
-                            onselectrepo={() => selectRepo(stub.displayPath)}
-                            onselectagent={selectAgent} />
-                        {#snippet pending()}
-                            <RepoCard
-                                displayPath={stub.displayPath}
-                                onclick={() => selectRepo(stub.displayPath)} />
-                        {/snippet}
-                        {#snippet failed(error)}
-                            <RepoCard
-                                displayPath={stub.displayPath}
-                                onclick={() => selectRepo(stub.displayPath)} />
-                            <div class="status-message">
-                                <ErrorSpan>
-                                    {error instanceof Error
-                                        ? error.message
-                                        : error}
-                                </ErrorSpan>
-                            </div>
-                        {/snippet}
-                    </svelte:boundary>
+                <RepoColumn {selection} displayPath={stub.displayPath}>
+                    {#snippet children(repoSelected, selectedAgentId)}
+                        <svelte:boundary>
+                            <RepoColumnContent
+                                {stub}
+                                {selectedAgentId}
+                                {repoSelected}
+                                onloaded={handleRepoLoaded}
+                                onselectrepo={() =>
+                                    selectRepo(stub.displayPath)}
+                                onselectagent={selectAgent} />
+                            {#snippet pending()}
+                                <RepoCard
+                                    displayPath={stub.displayPath}
+                                    selected={repoSelected}
+                                    onclick={() =>
+                                        selectRepo(stub.displayPath)} />
+                            {/snippet}
+                            {#snippet failed(error)}
+                                <RepoCard
+                                    displayPath={stub.displayPath}
+                                    selected={repoSelected}
+                                    onclick={() =>
+                                        selectRepo(stub.displayPath)} />
+                                <div class="status-message">
+                                    <ErrorSpan>
+                                        {error instanceof Error
+                                            ? error.message
+                                            : error}
+                                    </ErrorSpan>
+                                </div>
+                            {/snippet}
+                        </svelte:boundary>
+                    {/snippet}
                 </RepoColumn>
             {/each}
         </div>
@@ -234,7 +256,7 @@
                     {:else if detailIcon?.kind === "feather"}
                         <Icon name={detailIcon.name} />
                     {/if}
-                    <div class="detail-label">{detailLabel}</div>
+                    <div><IdentSpan>{detailLabel}</IdentSpan></div>
                 {/snippet}
                 <div class="iframe-container">
                     <iframe
@@ -329,15 +351,6 @@
         font-family: var(--ff-ui);
     }
 
-    .detail-label {
-        font-family: var(--ff-code);
-        font-weight: 600;
-
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-    }
-
     .status-message {
         display: flex;
         align-items: center;
@@ -384,22 +397,6 @@
 
     .mock-diff-del {
         color: var(--ctp-red);
-    }
-
-    .mock-input {
-        flex: 1;
-        resize: none;
-        padding: 8px;
-        border: 1px solid var(--ctp-overlay0);
-        border-radius: 4px;
-        background: var(--ctp-mantle);
-        font-family: var(--ff-code);
-        font-size: 13px;
-        color: var(--ctp-text);
-    }
-
-    .mock-input::placeholder {
-        color: var(--ctp-overlay1);
     }
 
     .mock-review {

@@ -101,11 +101,11 @@
 	}
 
 	.card:hover {
-		filter: brightness(0.95);
+		filter: brightness(0.9);
 	}
 
 	.card.selected {
-		filter: brightness(0.9);
+		filter: brightness(0.8);
 	}
 
 	.layout {

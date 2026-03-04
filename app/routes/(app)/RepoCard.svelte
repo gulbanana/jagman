@@ -1,14 +1,17 @@
 <script lang="ts">
 	import ErrorSpan from "$lib/ErrorSpan.svelte";
+	import IdentSpan from "$lib/IdentSpan.svelte";
 	import Pane from "$lib/Pane.svelte";
 	import type { RepoSummary, SessionMode } from "$lib/messages";
 
 	let {
 		displayPath,
+		selected = false,
 		repo = null,
 		onclick,
 	}: {
 		displayPath: string;
+		selected?: boolean;
 		repo?: RepoSummary | null;
 		onclick: () => void;
 	} = $props();
@@ -44,27 +47,29 @@
 	);
 </script>
 
-<button class="repo-header" {onclick}>
+<button class="repo-header" class:selected {onclick}>
 	<Pane stackedBelow>
 		{#snippet header()}
-			<span
+			<div
 				class="repo-name"
 				class:standard={greatestMode === "standard"}
 				class:plan={greatestMode === "plan"}
-				class:yolo={greatestMode === "yolo"}>{displayPath}</span>
+				class:yolo={greatestMode === "yolo"}>
+				<IdentSpan>{displayPath}</IdentSpan>
+			</div>
 		{/snippet}
 		{#if repo}
 			<div class="repo-info">
 				{#if running > 0}
 					<span class="stat"
-						><span class="dot dot-running"></span><span class="value"
-							>{running}</span
+						><span class="dot dot-running"></span><span
+							class="value">{running}</span
 						><span class="desc">running</span></span>
 				{/if}
 				{#if waiting > 0}
 					<span class="stat"
-						><span class="dot dot-waiting"></span><span class="value"
-							>{waiting}</span
+						><span class="dot dot-waiting"></span><span
+							class="value">{waiting}</span
 						><span class="desc">waiting</span></span>
 				{/if}
 				{#if done > 0}
@@ -95,12 +100,17 @@
 		border: none;
 		background: transparent;
 		cursor: pointer;
-		text-align: left;
+		/* text-align: left; */
 		color: var(--ctp-text);
+		/* font-family: var(--ff-code); */
 	}
 
 	.repo-header:hover {
-		filter: brightness(0.95);
+		filter: brightness(0.9);
+	}
+
+	.repo-header.selected {
+		filter: brightness(0.8);
 	}
 
 	.repo-name {
