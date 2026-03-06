@@ -2,13 +2,44 @@
 extern crate napi_derive;
 
 use std::collections::HashMap;
+use std::fs;
+use std::future::Future;
 use std::path::PathBuf;
-use std::sync::{LazyLock, Mutex};
+use std::sync::{Arc, LazyLock, Mutex};
 
+use gg_lib::worker::{EventSink, WorkerSession};
 use sysinfo::{ProcessRefreshKind, ProcessesToUpdate, System, UpdateKind};
 use tokio::net::TcpListener;
 use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
+
+/// Run an async closure on a dedicated thread with a single-threaded tokio
+/// runtime.  This allows futures that are `!Send` (e.g. those holding
+/// `WorkerSession` or its repo handles) to be awaited without conflicting with
+/// NAPI-RS's multi-threaded runtime requirement.
+async fn run_local<F, Fut, T>(f: F) -> napi::Result<T>
+where
+    F: FnOnce() -> Fut + Send + 'static,
+    Fut: Future<Output = napi::Result<T>>,
+    T: Send + 'static,
+{
+    tokio::task::spawn_blocking(move || {
+        tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .map_err(|e| napi::Error::from_reason(e.to_string()))?
+            .block_on(f())
+    })
+    .await
+    .map_err(|e| napi::Error::from_reason(e.to_string()))?
+}
+
+struct NoEventSink;
+impl EventSink for NoEventSink {
+    fn send(&self, _kind: &str, _data: serde_json::Value) {
+        // No-op
+    }
+}
 
 // ---------------------------------------------------------------------------
 // Process inspection
@@ -114,17 +145,11 @@ pub async fn start_gg_web(path: String) -> napi::Result<u16> {
 
     // Create the GG app (sync — sets up worker thread and router)
     let options = gg_lib::RunOptions::new(PathBuf::from(&path));
-    let (app, gg_shutdown_rx) = gg_lib::web::create_app(options, None)
-        .map_err(|e| napi::Error::from_reason(format!("Failed to create GG app: {e}")))?;
+    let (app, gg_shutdown_rx) = gg_lib::web::create_app(options, None)?;
 
     // Bind to a random available port
-    let listener = TcpListener::bind("127.0.0.1:0")
-        .await
-        .map_err(|e| napi::Error::from_reason(format!("Failed to bind listener: {e}")))?;
-    let port = listener
-        .local_addr()
-        .map_err(|e| napi::Error::from_reason(format!("Failed to get local addr: {e}")))?
-        .port();
+    let listener = TcpListener::bind("127.0.0.1:0").await?;
+    let port = listener.local_addr()?.port();
 
     // Create our own shutdown channel for external stop
     let (our_shutdown_tx, our_shutdown_rx) = oneshot::channel::<()>();
@@ -179,6 +204,10 @@ pub fn stop_gg_web(path: String) {
     }
 }
 
+// ---------------------------------------------------------------------------
+// GG web server — stop helpers
+// ---------------------------------------------------------------------------
+
 /// Stop all GG web server instances, optionally keeping one alive.
 #[napi]
 pub fn stop_all_gg_web(except_path: Option<String>) {
@@ -198,4 +227,59 @@ pub fn stop_all_gg_web(except_path: Option<String>) {
             }
         }
     }
+}
+
+// ---------------------------------------------------------------------------
+// Workspace management
+// ---------------------------------------------------------------------------
+
+/// Create a new Jujutsu workspace for agent isolation.
+///
+/// `repo_path` — filesystem path to the repository root.
+/// `workspace_name` — jj workspace name (a UUID).
+/// `workspace_path` — absolute filesystem path for the new workspace directory.
+#[napi]
+pub async fn create_workspace(
+    repo_path: String,
+    workspace_name: String,
+    workspace_path: String,
+) -> napi::Result<()> {
+    let repo_buf: PathBuf = repo_path.into();
+    let ws_buf: PathBuf = workspace_path.into();
+    run_local(move || async move {
+        let (settings, _, _, _) = gg_lib::read_config(Some(&repo_buf))?;
+        let mut worker = WorkerSession::new(Arc::new(NoEventSink), None, settings, false, false);
+        let mut repo = worker.load_workspace(&repo_buf).await?;
+
+        repo.add_workspace(workspace_name, ws_buf).await?;
+
+        Ok(())
+    })
+    .await
+}
+
+/// Remove (forget) a Jujutsu workspace.
+///
+/// `repo_path` — filesystem path to the repository root.
+/// `workspace_name` — jj workspace name to forget.
+/// `workspace_path` — absolute filesystem path for the workspace directory to remove.
+#[napi]
+pub async fn remove_workspace(
+    repo_path: String,
+    workspace_path: String,
+    workspace_name: String,
+) -> napi::Result<()> {
+    let repo_buf: PathBuf = repo_path.into();
+    let ws_buf: PathBuf = workspace_path.into();
+    run_local(move || async move {
+        let (settings, _, _, _) = gg_lib::read_config(Some(&repo_buf))?;
+        let mut worker = WorkerSession::new(Arc::new(NoEventSink), None, settings, false, false);
+        let mut repo = worker.load_workspace(&repo_buf).await?;
+
+        repo.forget_workspace(workspace_name).await?;
+        fs::remove_dir_all(ws_buf)?;
+
+        Ok(())
+    })
+    .await
 }

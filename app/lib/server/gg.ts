@@ -7,10 +7,13 @@ import {
 	startGgWeb as nativeStartGgWeb,
 	stopGgWeb as nativeStopGgWeb,
 	stopAllGgWeb as nativeStopAllGgWeb,
+	createWorkspace as nativeCreateWorkspace,
+	removeWorkspace as nativeRemoveWorkspace,
 } from 'libgg';
 import { homedir } from 'node:os';
-import { normalize } from 'node:path';
+import { join, normalize } from 'node:path';
 import { initService, pushActivity } from '$lib/server/state';
+import { JAGMAN_WORKSPACES_DIR } from '$lib/server/paths';
 
 const HOME = homedir();
 
@@ -39,6 +42,24 @@ export function stopGgWeb(displayPath: string): void {
 export function stopAllGgWeb(exceptDisplayPath: string | null): void {
 	const exceptFsPath = exceptDisplayPath !== null ? fromDisplayPath(exceptDisplayPath) : undefined;
 	nativeStopAllGgWeb(exceptFsPath);
+}
+
+// --- Workspace management ---
+
+/** Create a jj workspace for an agent session. Returns the workspace name (UUID). */
+export async function createAgentWorkspace(repoDisplayPath: string): Promise<string> {
+	const repoFsPath = fromDisplayPath(repoDisplayPath);
+	const workspaceName = crypto.randomUUID();
+	const workspacePath = normalize(join(JAGMAN_WORKSPACES_DIR, workspaceName));
+	await nativeCreateWorkspace(repoFsPath, workspaceName, workspacePath);
+	return workspaceName;
+}
+
+/** Remove (forget) a jj workspace. */
+export async function removeAgentWorkspace(repoDisplayPath: string, workspaceName: string): Promise<void> {
+	const workspacePath = normalize(join(JAGMAN_WORKSPACES_DIR, workspaceName));
+	const repoFsPath = fromDisplayPath(repoDisplayPath);
+	await nativeRemoveWorkspace(repoFsPath, workspacePath, workspaceName);
 }
 
 initService('gg web', () => ({}), () => stopAllGgWeb(null));

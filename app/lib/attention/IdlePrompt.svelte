@@ -8,10 +8,15 @@
 	async function submit() {
 		await fetch("/attention/" + id, { method: "DELETE" });
 	}
+
+	async function done() {
+		await fetch("/attention/" + id + "/done", { method: "POST" });
+	}
 </script>
 
 <TextArea name="idle-prompt" placeholder="Enter a prompt for the agent..." />
 <div class="actions">
+	<ControlButton onclick={done}>Done</ControlButton>
 	<ControlButton intent="confirm" onclick={submit}>Send</ControlButton>
 </div>
 

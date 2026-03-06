@@ -6,7 +6,7 @@
 	let { id }: { id: number; detail: LaunchPromptDetail } = $props();
 
 	async function submit() {
-		await fetch("/attention/" + id, { method: "DELETE" });
+		await fetch("/attention/" + id + "/launch", { method: "POST" });
 	}
 </script>
 
